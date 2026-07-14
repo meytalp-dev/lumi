@@ -123,15 +123,17 @@
     //  · Levels map to the CEFR ladder already used in english-chativa (§3), adjusted
     //    DOWN for age 6 (that ladder is grade 7): Pre-A1 → Pre-A1⁺ → A1⁻ → A1.
     var A = 'assets/';
+    // choice art is normalized (trimmed + centered on a uniform square) under
+    // assets/mapping/ so every picture renders at the SAME visual size in the row.
     var ITEMS = [
-      { topic: 'animals', word: 'dog',   band: 'B1', canDo: 'recognize-basic-word', choices: ['animals/pets/dog.png|dog', 'animals/pets/cat.png|cat', 'animals/farm/duck.png|duck'] },
-      { topic: 'colors',  word: 'red',   band: 'B1', canDo: 'recognize-basic-word', choices: ['colors/orbs/orb-red.png|red', 'colors/orbs/orb-blue.png|blue', 'colors/orbs/orb-yellow.png|yellow'] },
-      { topic: 'fruits',  word: 'apple', band: 'B1', canDo: 'recognize-basic-word', choices: ['fruits/apple.png|apple', 'fruits/banana.png|banana', 'fruits/orange.png|orange'] },
-      { topic: 'animals', word: 'cat',   band: 'B1', canDo: 'recognize-basic-word', choices: ['animals/pets/cat.png|cat', 'animals/pets/dog.png|dog', 'animals/pets/rabbit.png|rabbit'] },
-      { topic: 'fruits',  word: 'banana',band: 'B1', canDo: 'recognize-basic-word', choices: ['fruits/banana.png|banana', 'fruits/apple.png|apple', 'fruits/orange.png|orange'] },
-      { topic: 'animals', word: 'lion',  band: 'B1', canDo: 'recognize-basic-word', choices: ['animals/wild/lion.png|lion', 'animals/wild/bear.png|bear', 'animals/wild/elephant.png|elephant'] },
-      { topic: 'actions', word: 'Jump!', band: 'B1', canDo: 'follow-instruction', choices: ['actions/jump.png|Jump!', 'actions/stop.png|Stop!', 'actions/go.png|Go!'] },
-      { topic: 'actions', word: 'Stop!', band: 'B1', canDo: 'follow-instruction', choices: ['actions/stop.png|Stop!', 'actions/jump.png|Jump!', 'actions/go.png|Go!'] }
+      { topic: 'animals', word: 'dog',   band: 'B1', canDo: 'recognize-basic-word', choices: ['mapping/dog.png|dog', 'mapping/cat.png|cat', 'mapping/duck.png|duck'] },
+      { topic: 'colors',  word: 'red',   band: 'B1', canDo: 'recognize-basic-word', choices: ['mapping/orb-red.png|red', 'mapping/orb-blue.png|blue', 'mapping/orb-yellow.png|yellow'] },
+      { topic: 'fruits',  word: 'apple', band: 'B1', canDo: 'recognize-basic-word', choices: ['mapping/apple.png|apple', 'mapping/banana.png|banana', 'mapping/orange.png|orange'] },
+      { topic: 'animals', word: 'cat',   band: 'B1', canDo: 'recognize-basic-word', choices: ['mapping/cat.png|cat', 'mapping/dog.png|dog', 'mapping/rabbit.png|rabbit'] },
+      { topic: 'fruits',  word: 'banana',band: 'B1', canDo: 'recognize-basic-word', choices: ['mapping/banana.png|banana', 'mapping/apple.png|apple', 'mapping/orange.png|orange'] },
+      { topic: 'animals', word: 'lion',  band: 'B1', canDo: 'recognize-basic-word', choices: ['mapping/lion.png|lion', 'mapping/bear.png|bear', 'mapping/elephant.png|elephant'] },
+      { topic: 'actions', word: 'Jump!', band: 'B1', canDo: 'follow-instruction', choices: ['mapping/jump.png|Jump!', 'mapping/stop.png|Stop!', 'mapping/go.png|Go!'] },
+      { topic: 'actions', word: 'Stop!', band: 'B1', canDo: 'follow-instruction', choices: ['mapping/stop.png|Stop!', 'mapping/jump.png|Jump!', 'mapping/go.png|Go!'] }
     ];
     var TOTAL = ITEMS.length;
 
