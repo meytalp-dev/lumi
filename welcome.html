@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#2e2440">
-<title>Lumi · מי זה לומי</title>
+<title>Lumi · שער הכניסה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -40,26 +40,26 @@
   @keyframes float { 0%,100% { transform: translateY(0) rotate(-1.2deg); } 50% { transform: translateY(-14px) rotate(1.2deg); } }
 
   /* ---- bottom: a frosted panel that lets the grove glow through ---- */
-  .panel { width: min(460px, 100%); background: rgba(255,246,236,.86); backdrop-filter: blur(14px) saturate(1.2);
-    color: var(--ink, #3a2b2b); border-radius: 28px 28px 0 0; padding: 22px 22px calc(20px + env(safe-area-inset-bottom));
+  .panel { width: min(460px, 100%); background: rgba(255,246,236,.82); backdrop-filter: blur(14px) saturate(1.2);
+    color: var(--ink, #3a2b2b); border-radius: 28px 28px 0 0; padding: 20px 22px calc(20px + env(safe-area-inset-bottom));
     box-shadow: 0 -10px 40px rgba(46,36,64,.4); border-top: 1px solid rgba(255,255,255,.6);
     display: flex; flex-direction: column; gap: 12px; z-index: 2; }
-  .panel h1 { margin: 0; font-size: clamp(20px, 5.2vw, 25px); font-weight: 900; color: var(--dusk-deep, #2e2440); }
-  .panel .lead { margin: 0; font-size: clamp(14px, 3.7vw, 16px); font-weight: 500; line-height: 1.55; color: var(--ink-soft, #7a6a68); }
-  .panel .lead b { color: var(--coral-deep, #e05a4a); font-weight: 800; }
+  .panel h1 { margin: 0; font-size: clamp(19px, 5vw, 24px); font-weight: 900; color: var(--dusk-deep, #2e2440); }
+  .panel .lead { margin: 0; font-size: clamp(14px, 3.7vw, 16px); font-weight: 500; line-height: 1.45; color: var(--ink-soft, #7a6a68); }
 
-  /* three tiny "what Lumi does" cues — quick, scannable for a parent */
-  .cues { display: flex; justify-content: center; gap: 8px; margin: 2px 0 2px; }
-  .cue { flex: 1; background: #fff; border: 1.5px solid var(--card-edge, #ffe3c4); border-radius: 14px;
-    padding: 9px 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .cue .ic { font-size: 22px; line-height: 1; }
-  .cue .tx { font-size: 11.5px; font-weight: 700; color: var(--ink, #3a2b2b); line-height: 1.25; }
+  .name-field { display: flex; align-items: center; gap: 10px; background: #fff; border: 2px solid var(--card-edge, #ffe3c4);
+    border-radius: 16px; padding: 4px 6px 4px 14px; transition: border-color .2s; }
+  .name-field:focus-within { border-color: var(--amber, #f5972b); }
+  .name-field .ic { font-size: 20px; }
+  .name-field input { flex: 1; font-family: inherit; font-size: 17px; font-weight: 700; color: var(--ink, #3a2b2b);
+    padding: 11px 4px; min-height: 46px; border: 0; outline: none; background: transparent; }
 
   .cta { font-size: 19px; font-weight: 800; color: #fff; border: 0; cursor: pointer; width: 100%;
     background: linear-gradient(180deg, var(--coral, #f4785f), var(--coral-deep, #e05a4a));
     padding: 15px 26px; border-radius: 999px; min-height: 58px; box-shadow: 0 10px 24px rgba(224,90,74,.5);
     transition: transform .15s var(--ease, ease); }
   .cta:active { transform: scale(.96); }
+  .cta-note { margin: 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--ink-soft, #7a6a68); }
 </style>
 </head>
 <body>
@@ -77,25 +77,37 @@
     <div class="hero" aria-hidden="true"></div>
 
     <section class="panel">
-      <h1>מִי זֶה לוּמִי? 🏮</h1>
-      <p class="lead">לוּמִי הוּא יְצוּר-אוֹר קָטָן וְחַם מִיַּעַר הַפַּנָּסִים — חָבֵר שֶׁמְּלַוֶּה אֶת הַיֶּלֶד/ה בְּמַסָּע רַךְ לְלִמּוּד אַנְגְּלִית, כֻּלּוֹ דֶּרֶךְ מִשְׂחָק. כָּל מִלָּה חֲדָשָׁה <b>מַדְלִיקָה פַּנָּס</b> בַּדֶּרֶךְ, וְלוּמִי מַתְאִים אֶת עַצְמוֹ בְּדִיּוּק לְמָה שֶׁכְּבָר יוֹדְעִים.</p>
+      <h1>בְּרוּכִים הַבָּאִים לַמַּסָּע 🏮</h1>
+      <p class="lead">כָּל מִלָּה בְּאַנְגְּלִית שֶׁתִּלְמְדוּ מַדְלִיקָה פַּנָּס בַּדֶּרֶךְ שֶׁל לוּמִי.</p>
 
-      <div class="cues" aria-hidden="true">
-        <div class="cue"><span class="ic">🎧</span><span class="tx">שׁוֹמְעִים<br>אַנְגְּלִית</span></div>
-        <div class="cue"><span class="ic">🎮</span><span class="tx">לוֹמְדִים<br>בְּמִשְׂחָק</span></div>
-        <div class="cue"><span class="ic">🏮</span><span class="tx">מַדְלִיקִים<br>פַּנָּסִים</span></div>
+      <div class="name-field">
+        <span class="ic">🙂</span>
+        <input id="childName" type="text" inputmode="text" autocomplete="off"
+               placeholder="אֵיךְ קוֹרְאִים לַיֶּלֶד/ה?" maxlength="24" aria-label="שם הילד">
       </div>
 
-      <button class="cta" id="continueBtn" type="button">בּוֹאוּ נַתְחִיל אֶת הַמַּסָּע ➜</button>
+      <button class="cta" id="startBtn" type="button">בּוֹאוּ נַתְחִיל ➜</button>
+      <p class="cta-note">קוֹדֶם נַכִּיר מָה אַתֶּם כְּבָר יוֹדְעִים 🏮</p>
     </section>
   </main>
 
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>
   <script>
   (function () {
     'use strict';
-    document.getElementById('continueBtn').addEventListener('click', function () {
-      location.href = 'welcome.html';
+    var nameEl = document.getElementById('childName');
+    try { var prev = localStorage.getItem('lumi-student-name'); if (prev) nameEl.value = prev; } catch (e) {}
+
+    document.getElementById('startBtn').addEventListener('click', function () {
+      var name = (nameEl.value || '').trim();
+      try {
+        if (name) localStorage.setItem('lumi-student-name', name);
+        localStorage.setItem('lumi-entry', JSON.stringify({ name: name || null, gate: 'v2' }));
+      } catch (e) {}
+      location.href = 'mapping.html' + (name ? ('?name=' + encodeURIComponent(name)) : '');
     });
+    nameEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('startBtn').click(); });
   })();
   </script>
 </body>
