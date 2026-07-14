@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2e2440">
+<title>Lumi · בואו נכיר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body { font-family: var(--font-ui, 'Heebo', system-ui, sans-serif); color: #fff6ec; }
+
+  .bg { position: fixed; inset: 0; z-index: -2;
+    background: #2e2440 center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png); }
+  .bg::before { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(46,36,64,.74) 0%, rgba(46,36,64,.42) 40%, rgba(46,36,64,.72) 100%); }
+
+  .wrap { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    padding: max(14px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); }
+
+  /* progress lanterns */
+  .rail { display: flex; gap: 7px; margin: 4px 0 12px; flex-wrap: wrap; justify-content: center; }
+  .rail .pip { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,.22);
+    transition: background .35s, box-shadow .35s; }
+  .rail .pip.done { background: var(--lantern-lit, #ffd257); box-shadow: 0 0 10px 2px var(--lantern-glow, #fff0b0); }
+  .rail .pip.now  { background: #fff6ec; box-shadow: 0 0 10px 2px rgba(255,246,236,.7); }
+
+  .card { width: min(460px, 100%); flex: 1; min-height: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px; text-align: center; }
+
+  .lumi { width: clamp(88px, 26vw, 130px); aspect-ratio: 1; background: center/contain no-repeat;
+    filter: drop-shadow(0 12px 20px rgba(0,0,0,.5)); animation: float 4s ease-in-out infinite; flex: none; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  .lumi.listening { background-image: url(assets/character/lumi/lumi-listening.png); }
+  .lumi.happy     { background-image: url(assets/character/lumi/lumi-happy.png); }
+  .lumi.point     { background-image: url(assets/character/lumi/lumi-pointing.png); }
+  .lumi.celebrate { background-image: url(assets/character/lumi/lumi-celebrate.png); }
+
+  .prompt { font-size: clamp(17px, 4.6vw, 21px); font-weight: 800; color: #fff6ec;
+    text-shadow: 0 2px 12px rgba(46,36,64,.9); margin: 0; }
+  .sub { font-size: 14px; font-weight: 600; color: #ffe8d2; opacity: .9; margin: 0; }
+
+  /* replay button — the child can always hear the word again */
+  .replay { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800;
+    color: var(--dusk-deep, #2e2440); background: rgba(255,246,236,.94); border: 0; cursor: pointer;
+    padding: 11px 20px; border-radius: 999px; min-height: 50px; box-shadow: 0 6px 16px rgba(46,36,64,.4);
+    transition: transform .12s var(--ease, ease); }
+  .replay:active { transform: scale(.95); }
+  .replay .ic { font-size: 22px; }
+
+  /* the 3 picture choices */
+  .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .choice { position: relative; aspect-ratio: 1; border-radius: 22px; cursor: pointer; border: 3px solid transparent;
+    background: rgba(255,246,236,.92); box-shadow: 0 8px 20px rgba(46,36,64,.36);
+    display: grid; place-items: center; padding: 10px; transition: transform .12s var(--ease), border-color .2s; }
+  .choice img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(46,36,64,.25)); }
+  .choice:active { transform: scale(.94); }
+  .choice.pick { border-color: var(--gold, #ffc35c); box-shadow: 0 0 0 4px rgba(255,210,110,.5), 0 8px 20px rgba(46,36,64,.4); }
+  .choice.dim { opacity: .45; }
+
+  .skip { font-size: 14px; font-weight: 700; color: rgba(255,246,236,.82);
+    background: rgba(46,36,64,.4); border: 0; padding: 9px 18px; border-radius: 999px; min-height: 42px; cursor: pointer; }
+  .skip:active { transform: scale(.96); }
+
+  /* intro + results share the panel look */
+  .panel { width: min(460px, 100%); background: var(--panel, rgba(255,246,236,.94)); color: var(--ink, #3a2b2b);
+    border-radius: var(--radius-lg, 30px); padding: 24px 22px; box-shadow: var(--shadow-card, 0 12px 34px rgba(46,36,64,.4));
+    display: flex; flex-direction: column; gap: 14px; }
+  .panel h1 { margin: 0; font-size: clamp(21px, 5.6vw, 27px); font-weight: 900; color: var(--dusk-deep, #2e2440); }
+  .panel h1 .nm { color: var(--coral-deep, #e05a4a); }
+  .panel p { margin: 0; font-size: clamp(15px, 4vw, 17px); font-weight: 500; line-height: 1.5; color: var(--ink-soft, #7a6a68); }
+
+  .cta { font-size: 20px; font-weight: 800; color: #fff; border: 0; cursor: pointer; width: 100%;
+    background: linear-gradient(180deg, var(--coral, #f4785f), var(--coral-deep, #e05a4a));
+    padding: 16px 28px; border-radius: 999px; min-height: 60px; box-shadow: 0 12px 26px rgba(224,90,74,.5);
+    transition: transform .15s var(--ease, ease); }
+  .cta:active { transform: scale(.96); }
+
+  /* teacher-only summary on the results screen */
+  .teacher { margin-top: 4px; padding: 12px 14px; border-radius: 16px; background: rgba(46,36,64,.06);
+    border: 1px dashed rgba(46,36,64,.2); text-align: right; }
+  .teacher .t-lvl { font-size: 15px; font-weight: 900; color: var(--dusk-deep, #2e2440); }
+  .teacher .t-row { font-size: 13px; font-weight: 600; color: var(--ink-soft, #7a6a68); margin-top: 3px; }
+  .grown { font-size: 12px; font-weight: 600; color: rgba(255,246,236,.7); margin-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="wrap">
+    <div class="rail" id="rail" aria-hidden="true"></div>
+    <div class="card" id="card"></div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    // ---- name (carried from the gate) --------------------------------------
+    var name = '';
+    var m = /[?&]name=([^&]+)/.exec(location.search);
+    if (m) { try { name = decodeURIComponent(m[1]); } catch (e) {} }
+    if (!name) { try { name = localStorage.getItem('lumi-student-name') || ''; } catch (e) {} }
+    var qs = name ? ('?name=' + encodeURIComponent(name)) : '';
+
+    // ---- the assessment items (BOY placement · sample, not census) ----------
+    // Each = play an English word, child taps the matching picture among 3.
+    //
+    // ALIGNMENT (validated against the project's own sources):
+    //  · English Curriculum 2020 defines a level by THREE pillars — can-do +
+    //    vocabulary (lexical bands) + grammar (english-chativa curriculum-2020-master.md §1).
+    //    Band 1 = Pre-A1/A1. At age-6 BOY there is no reading/grammar yet, so the
+    //    measurable construct is oral vocabulary + comprehension (pedagogy-research §1).
+    //  · Every item below is Band 1, tagged to a can-do:
+    //      recognize-basic-word  = Pre-A1 receptive vocabulary (listen → identify picture)
+    //      follow-instruction    = Pre-A1 listening/TPR can-do
+    //  · Levels map to the CEFR ladder already used in english-chativa (§3), adjusted
+    //    DOWN for age 6 (that ladder is grade 7): Pre-A1 → Pre-A1⁺ → A1⁻ → A1.
+    var A = 'assets/';
+    var ITEMS = [
+      { topic: 'animals', word: 'dog',   band: 'B1', canDo: 'recognize-basic-word', choices: ['animals/pets/dog.png|dog', 'animals/pets/cat.png|cat', 'animals/farm/duck.png|duck'] },
+      { topic: 'colors',  word: 'red',   band: 'B1', canDo: 'recognize-basic-word', choices: ['colors/orbs/orb-red.png|red', 'colors/orbs/orb-blue.png|blue', 'colors/orbs/orb-yellow.png|yellow'] },
+      { topic: 'fruits',  word: 'apple', band: 'B1', canDo: 'recognize-basic-word', choices: ['fruits/apple.png|apple', 'fruits/banana.png|banana', 'fruits/orange.png|orange'] },
+      { topic: 'animals', word: 'cat',   band: 'B1', canDo: 'recognize-basic-word', choices: ['animals/pets/cat.png|cat', 'animals/pets/dog.png|dog', 'animals/pets/rabbit.png|rabbit'] },
+      { topic: 'fruits',  word: 'banana',band: 'B1', canDo: 'recognize-basic-word', choices: ['fruits/banana.png|banana', 'fruits/apple.png|apple', 'fruits/orange.png|orange'] },
+      { topic: 'animals', word: 'lion',  band: 'B1', canDo: 'recognize-basic-word', choices: ['animals/wild/lion.png|lion', 'animals/wild/bear.png|bear', 'animals/wild/elephant.png|elephant'] },
+      { topic: 'actions', word: 'Jump!', band: 'B1', canDo: 'follow-instruction', choices: ['actions/jump.png|Jump!', 'actions/stop.png|Stop!', 'actions/go.png|Go!'] },
+      { topic: 'actions', word: 'Stop!', band: 'B1', canDo: 'follow-instruction', choices: ['actions/stop.png|Stop!', 'actions/jump.png|Jump!', 'actions/go.png|Go!'] }
+    ];
+    var TOTAL = ITEMS.length;
+
+    // shuffle a copy of the 3 choices so the answer isn't always first
+    function shuffled(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+      return a;
+    }
+
+    var results = [];   // {topic, correct}
+    var saidHello = false;
+    var idx = 0;
+
+    var card = document.getElementById('card');
+    var rail = document.getElementById('rail');
+
+    function buildRail(active) {
+      rail.innerHTML = '';
+      for (var i = 0; i < TOTAL; i++) {
+        var p = document.createElement('span');
+        p.className = 'pip' + (i < active ? ' done' : (i === active ? ' now' : ''));
+        rail.appendChild(p);
+      }
+    }
+
+    function playWord(w) { try { LumiAudio.english(w); } catch (e) {} }
+
+    // ---------- screen: intro ----------
+    function screenIntro() {
+      rail.innerHTML = '';
+      card.innerHTML =
+        '<div class="lumi happy"></div>' +
+        '<section class="panel">' +
+          '<h1>נָעִים לְהַכִּיר' + (name ? '<span class="nm">, ' + name + '</span>' : '') + '! 👋</h1>' +
+          '<p>לִפְנֵי שֶׁיּוֹצְאִים לַמַּסָּע, לוּמִי רוֹצֶה לְהַכִּיר אֶתְכֶם — נְשַׂחֵק כַּמָּה מִשְׂחָקִים קְצָרִים. תִּשְׁמְעוּ מִלָּה בְּאַנְגְּלִית וְתִגְּעוּ בַּתְּמוּנָה. אֵין נָכוֹן אוֹ לֹא נָכוֹן — אִם קָשֶׁה, פָּשׁוּט מְדַלְּגִים.</p>' +
+          '<button class="cta" id="go">יַאלְלָה, מַתְחִילִים ➜</button>' +
+        '</section>';
+      document.getElementById('go').addEventListener('click', function () {
+        // first user gesture — unlocks audio for the rest of the flow
+        idx = 0; screenItem();
+      });
+    }
+
+    // ---------- screen: one point-and-tap item ----------
+    function screenItem() {
+      if (idx >= TOTAL) { screenHello(); return; }
+      buildRail(idx);
+      var it = ITEMS[idx];
+      var opts = shuffled(it.choices);
+
+      var choicesHtml = opts.map(function (c) {
+        var parts = c.split('|'); // "path|answerWord"
+        return '<button class="choice" data-w="' + parts[1] + '"><img src="' + A + parts[0] + '" alt=""></button>';
+      }).join('');
+
+      card.innerHTML =
+        '<div class="lumi listening"></div>' +
+        '<p class="prompt">מָה שָׁמַעְתֶּם? גְּעוּ בַּתְּמוּנָה 👂</p>' +
+        '<button class="replay" id="replay"><span class="ic">🔊</span> שׁוּב</button>' +
+        '<div class="choices">' + choicesHtml + '</div>' +
+        '<button class="skip" id="skip">לֹא בָּטוּחַ/ה? מְדַלְּגִים ➜</button>';
+
+      playWord(it.word);
+      document.getElementById('replay').addEventListener('click', function () { playWord(it.word); });
+
+      var answered = false;
+      function answer(correct, el) {
+        if (answered) return; answered = true;
+        results.push({ topic: it.topic, canDo: it.canDo, band: it.band, correct: correct });
+        // This is a MAPPING, not a game: we record what the child knows and move on.
+        // NO "right/wrong", NO "try again", NO revealing the answer — just a warm,
+        // judgment-free acknowledgement of their tap, identical whichever they picked.
+        if (el) el.classList.add('pick');
+        setTimeout(function () { idx++; screenItem(); }, 620);
+      }
+
+      card.querySelectorAll('.choice').forEach(function (b) {
+        b.addEventListener('click', function () { answer(b.getAttribute('data-w') === it.word, b); });
+      });
+      document.getElementById('skip').addEventListener('click', function () { answer(false, null); });
+    }
+
+    // ---------- screen: say hello (flag only, no score) ----------
+    function screenHello() {
+      buildRail(TOTAL);
+      card.innerHTML =
+        '<div class="lumi point"></div>' +
+        '<p class="prompt">לוּמִי אוֹמֵר לָכֶם שָׁלוֹם — תַּגִּידוּ לוֹ בַּחֲזָרָה!</p>' +
+        '<p class="sub">"Hello!" 👋</p>' +
+        '<button class="replay" id="replay"><span class="ic">🔊</span> hello</button>' +
+        '<button class="cta" id="said" style="width:min(320px,100%)">אָמַרְתִּי! 😊</button>' +
+        '<button class="skip" id="skip">מְדַלְּגִים ➜</button>';
+      setTimeout(function () { playWord('hello'); }, 250);
+      document.getElementById('replay').addEventListener('click', function () { playWord('hello'); });
+      document.getElementById('said').addEventListener('click', function () { saidHello = true; screenResults(); });
+      document.getElementById('skip').addEventListener('click', function () { saidHello = false; screenResults(); });
+    }
+
+    // ---------- scoring → profile ----------
+    function tally(results, key) {
+      var out = {};
+      results.forEach(function (r) {
+        var k = r[key]; out[k] = out[k] || { n: 0, ok: 0 };
+        out[k].n++; if (r.correct) out[k].ok++;
+      });
+      return out;
+    }
+    function computeProfile() {
+      var correct = results.filter(function (r) { return r.correct; }).length;
+      var byTopic = tally(results, 'topic');   // evidence for the teacher
+      var byCanDo = tally(results, 'canDo');   // aligned to Curriculum-2020 can-do
+      // level 1–4 → CEFR band (age-6-adjusted) → tier 1–3 (task depth per station).
+      // ⚠️ THRESHOLDS ARE UNCALIBRATED PLACEHOLDERS — to be tuned once real children
+      //    flow through (same status as pL0 calibration in the avnei-yesod placement spec §10).
+      var level = correct <= 2 ? 1 : correct <= 4 ? 2 : correct <= 6 ? 3 : 4;
+      var tier  = ({ 1: 1, 2: 1, 3: 2, 4: 3 })[level];
+      return { correct: correct, total: TOTAL, level: level, cefr: LEVEL[level].cefr,
+               tier: tier, byTopic: byTopic, byCanDo: byCanDo, saidHello: saidHello };
+    }
+
+    // CEFR ladder from english-chativa curriculum-2020-master §3, adjusted DOWN for age 6
+    // (that ladder targets grade 7). Band 1 = Pre-A1/A1 throughout.
+    var LEVEL = {
+      1: { cefr: 'Pre-A1',  he: 'טֶרֶם חֲשִׂיפָה' },
+      2: { cefr: 'Pre-A1⁺', he: 'נִצָּנֵי חֲשִׂיפָה' },
+      3: { cefr: 'A1⁻',     he: 'חֲשִׂיפָה בּוֹנָה' },
+      4: { cefr: 'A1',      he: 'חֲשִׂיפָה עֲשִׁירָה' }
+    };
+    var TOPIC_HE = { animals: 'חַיּוֹת', colors: 'צְבָעִים', fruits: 'פֵּרוֹת', actions: 'מִלּוֹת־פְּעֻלָּה' };
+    var CANDO_HE = { 'recognize-basic-word': 'זִהוּי מִלִּים (קְלִיטָה)', 'follow-instruction': 'הֲבָנַת הַנְחָיָה (TPR)' };
+
+    // ---------- screen: results ----------
+    function screenResults() {
+      var prof = computeProfile();
+      // persist the opening literacy profile (read later by the games to set depth)
+      try {
+        localStorage.setItem('lumi-profile', JSON.stringify({
+          name: name || null, level: prof.level, cefr: prof.cefr, tier: prof.tier,
+          correct: prof.correct, total: prof.total,
+          byTopic: prof.byTopic, byCanDo: prof.byCanDo, saidHello: prof.saidHello,
+          band: 'B1', calibrated: false,   // thresholds not yet calibrated (see code note)
+          at: new Date().toISOString()
+        }));
+      } catch (e) {}
+
+      // NOTE: the pedagogical read-out (CEFR / can-do / tier / caveats) is saved to
+      // localStorage['lumi-profile'] for the TEACHER/PARENT view — it is intentionally
+      // NOT shown to the child. The child sees only warmth + the way forward.
+      card.innerHTML =
+        '<div class="lumi celebrate"></div>' +
+        '<section class="panel">' +
+          '<h1>כָּל הַכָּבוֹד' + (name ? '<span class="nm">, ' + name + '</span>' : '') + '! 🎉</h1>' +
+          '<p>הִכַּרְנוּ! עַכְשָׁיו לוּמִי יוֹדֵעַ בְּדִיּוּק אֵיךְ לְלַוּוֹת אֶתְכֶם. יוֹצְאִים לַמַּפָּה!</p>' +
+          '<button class="cta" id="toMap">לַמַּפָּה ➜ 🏮</button>' +
+        '</section>';
+      document.getElementById('toMap').addEventListener('click', function () {
+        location.href = 'hub.html' + qs;
+      });
+    }
+
+    screenIntro();
+  })();
+  </script>
+</body>
+</html>

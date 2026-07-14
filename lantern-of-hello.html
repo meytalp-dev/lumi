@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2e2440">
+<title>Lumi · פַּנַּס הַשָּׁלוֹם</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  :root { --coral: #ff9f7e; --coral-deep: #f27a52; --mint: #9fe8d8; --aqua: #78d8d0; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: Heebo, system-ui, sans-serif;
+    /* warm dusk DNA — the entrance to the grove where a friend waits */
+    background:
+      linear-gradient(180deg, rgba(46,36,64,.50) 0%, rgba(46,36,64,.16) 40%, rgba(46,36,64,.58) 100%),
+      center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png) fixed,
+      linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 54%, var(--sky-low) 100%) fixed;
+    color: #fff6ec; display: flex; flex-direction: column;
+  }
+  /* ?frame=1 — deterministic 390×844 device box for screenshots */
+  body.frame { width: 390px; height: 844px; margin: 24px auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  html:has(body.frame) { height: auto; background: #111; overflow: auto; }
+
+  /* 🔴 the flex spine (Meytal, learned from T3/T4): without this the #stage chain
+     collapses to height 0 and the mechanic scene renders empty. */
+  .lg-stage { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+
+  /* ---- HUD: lantern-of-hello progress rail (one warm light per greeting) ---- */
+  .lg-hud { position: absolute; top: 0; inset-inline: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .lg-prog { display: flex; gap: 7px; background: rgba(46,36,64,.42); padding: 8px 14px; border-radius: 999px;
+    backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .lg-pip { width: 15px; height: 20px; border-radius: 4px 4px 5px 5px; background: rgba(255,255,255,.22);
+    position: relative; transition: background .4s ease, box-shadow .4s ease; }
+  .lg-pip::before { content: ""; position: absolute; inset-inline: 4px; top: -3px; height: 4px; border-radius: 3px 3px 0 0; background: rgba(255,255,255,.3); }
+  .lg-pip.lit { background: var(--lantern-glow, #f6e8a6); box-shadow: 0 0 10px 2px rgba(246,232,166,.7); }
+  .lg-home { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); opacity: .9; }
+
+  /* ---- persistent Lumi companion zone (waves through the whole meeting) ---- */
+  .lumi-zone { position: relative; z-index: 6; display: flex; justify-content: center; align-items: flex-end;
+    padding: 50px 0 0; min-height: 132px; }
+
+  /* ---- game stage (meet / produce mechanics mount here) ---- */
+  #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+    overflow: hidden; padding: 6px 16px 20px; }
+
+  /* ============================================================
+     LUMI companion (SVG placeholder) — copied from the canonical journey shell.
+     ============================================================ */
+  .lumi { position: relative; }
+  .lumi-stage { width: 118px; height: 128px; position: relative; animation: float 4s ease-in-out infinite; }
+  .lumi-svg { width: 100%; height: 100%; overflow: visible; }
+  .lumi-aura { transform-origin: 60px 60px; animation: breathe 3.4s ease-in-out infinite; }
+  .lumi-core { transform-origin: 60px 58px; }
+  .lumi-eye  { fill: var(--dusk-deep); transition: all .25s; }
+  .lumi-spark{ fill: #fff; }
+  .lumi-smile{ fill: none; stroke: var(--dusk-deep); stroke-width: 3.4; stroke-linecap: round; transition: d .25s; }
+  .lumi-cheek{ fill: var(--coral); opacity: .5; }
+  .lumi-arm  { fill: none; stroke: var(--gold); stroke-width: 6; stroke-linecap: round; opacity: .85; transition: all .3s var(--ease); }
+  .lumi-point{ fill: var(--gold); opacity: 0; transition: opacity .25s; }
+  @keyframes breathe { 0%,100%{opacity:.55; transform:scale(1)} 50%{opacity:.8; transform:scale(1.08)} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+  .lumi-stage[data-mood="listen"] .lumi-arm-l { d: path("M28 74 q-20 -4 -22 -20"); }
+  .lumi-stage[data-mood="listen"] .lumi-arm-r { d: path("M92 74 q20 -4 22 -20"); }
+  .lumi-stage[data-mood="points"] .lumi-point { opacity: 1; animation: pointBob 1s ease-in-out infinite; }
+  .lumi-stage[data-mood="points"] { transform: rotate(-4deg); }
+  @keyframes pointBob { 0%,100%{transform:translateX(0)} 50%{transform:translateX(5px)} }
+  .lumi-stage[data-mood="hug"]   .lumi-arm-l { d: path("M28 74 q18 14 30 6"); }
+  .lumi-stage[data-mood="hug"]   .lumi-arm-r { d: path("M92 74 q-18 14 -30 6"); }
+  .lumi-stage[data-mood="hug"]   .lumi-aura  { opacity: .9 !important; transform: scale(1.15) !important; }
+  .lumi-stage[data-mood="lean"]  { transform: rotate(6deg) translateY(-2px); }
+  .lumi-stage[data-mood="dim"]   .lumi-aura  { opacity: .3 !important; animation: none; }
+  .lumi-stage[data-mood="dim"]   .lumi-core  { filter: saturate(.7) brightness(.92); }
+  .lumi-stage[data-mood="dim"]   .lumi-smile { d: path("M50 72 q10 4 20 0"); }
+  .lumi-stage[data-mood="glow"]  .lumi-aura  { opacity: 1 !important; transform: scale(1.3) !important; }
+  .lumi-stage[data-mood="glow"]  .lumi-core  { filter: brightness(1.12); }
+  .lumi-stage[data-mood="happy"] .lumi-smile { d: path("M48 68 q12 12 24 0"); }
+  /* a friendly WAVE when Lumi greets (its right light-arm lifts and swings) */
+  .lumi-stage[data-mood="happy"] .lumi-arm-r,
+  .lumi-stage[data-mood="glow"]  .lumi-arm-r { d: path("M92 74 q22 -10 16 -30"); transform-origin: 92px 74px; animation: wave 1.1s ease-in-out infinite; }
+  @keyframes wave { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(10deg)} }
+  .lumi-stage.lumi-pulse { animation: lumiPulse .7s var(--ease); }
+  @keyframes lumiPulse { 0%{transform:scale(1)} 40%{transform:scale(1.14)} 100%{transform:scale(1)} }
+  .lumi-bubble { position: absolute; top: -6px; inset-inline-start: 100%;
+    background: var(--card); border-radius: 16px; padding: 8px 12px; box-shadow: var(--shadow-soft); font-size: 22px; }
+
+  /* ============================================================
+     MEET (a friend appears) — canonical .meet chrome, friend art wired page-locally
+     via the glyph map (the shared meet.js is untouched).
+     ============================================================ */
+  .meet { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; }
+  .meet-scene { position: relative; width: clamp(210px, 62vw, 300px); height: clamp(230px, 64vw, 330px);
+    display: grid; place-items: center; opacity: 0; transform: scale(.6);
+    transition: opacity .6s, transform .7s var(--ease); }
+  .meet-scene.meet-in { opacity: 1; transform: scale(1); }
+  .meet-halo { position: absolute; inset: 4%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(246,232,166,.55), rgba(159,232,216,.18) 55%, transparent 72%);
+    animation: breathe 3s ease-in-out infinite; }
+  .meet-emoji { font-size: 0; position: relative; z-index: 2; width: 100%; height: 100%; display: grid; place-items: center; }
+  .meet-emoji .friend { width: 100%; height: 100%; object-fit: contain;
+    filter: drop-shadow(0 14px 22px rgba(46,36,64,.5)); animation: friendBob 3.4s ease-in-out infinite; }
+  @keyframes friendBob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } }
+
+  /* ============================================================
+     PRODUCE self-listening loop — canonical .produce chrome (journey shell).
+     ============================================================ */
+  .produce { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+  .produce-replay, .prompt-replay { width: var(--touch); height: var(--touch); border-radius: 50%;
+    background: linear-gradient(160deg, var(--gold), var(--amber)); box-shadow: var(--shadow-card);
+    display: grid; place-items: center; font-size: 30px; transition: transform .15s var(--ease); }
+  .produce-replay:active { transform: scale(.92); }
+  .mic-btn { position: relative; width: 104px; height: 104px; border-radius: 50%;
+    background: linear-gradient(160deg, var(--coral), var(--coral-deep));
+    box-shadow: var(--shadow-card); display: grid; place-items: center; font-size: 46px; }
+  .mic-ring { position: absolute; inset: -6px; border-radius: 50%; border: 4px solid var(--coral); opacity: 0; }
+  .mic-btn.mic--live .mic-ring { opacity: 1; animation: ring 1s ease-out infinite; }
+  .mic-btn.mic--heard { background: linear-gradient(160deg, var(--gold), var(--amber)); }
+  @keyframes ring { 0%{transform:scale(1); opacity:.8} 100%{transform:scale(1.5); opacity:0} }
+  .produce-loop { display: flex; gap: 16px; }
+  .loop-btn { width: 78px; height: 78px; border-radius: 50%; font-size: 36px;
+    background: var(--card); box-shadow: var(--shadow-card); display: grid; place-items: center; }
+  .loop-btn:disabled { opacity: .4; }
+  .produce-actions { display: flex; gap: 14px; }
+  .again-btn, .continue-btn { font-size: 16px; font-weight: 800; padding: 12px 22px; border-radius: 999px;
+    box-shadow: var(--shadow-card); min-height: 48px; }
+  .again-btn { background: var(--card); color: var(--dusk-deep); }
+  .continue-btn { background: linear-gradient(160deg, var(--gold), var(--amber)); color: var(--dusk-deep); }
+  .skip-btn { font-size: 15px; font-weight: 700; color: #fff6ec; background: rgba(46,36,64,.32);
+    padding: 10px 20px; border-radius: 999px; }
+
+  /* ---- sparkle (LumiFx.sparkle) ---- */
+  .spark { position: fixed; width: 10px; height: 10px; border-radius: 50%; z-index: 50; pointer-events: none;
+    background: radial-gradient(circle, var(--lantern-glow), var(--gold)); transform: translate(-50%,-50%);
+    animation: sparkFly .72s ease-out forwards; }
+  @keyframes sparkFly { 0%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3)} }
+
+  /* ---- overlays (intro / done) — warm card DNA, with the friend introduced ---- */
+  .lg-overlay { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 28px;
+    background: radial-gradient(circle at 50% 30%, rgba(46,36,64,.30), rgba(36,26,46,.64)); }
+  .lg-overlay.hidden { display: none; }
+  .lg-cast { display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+  .lg-hero { width: clamp(120px, 34vw, 168px); aspect-ratio: 1; background: center/contain no-repeat;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.45)); animation: heroFloat 4s ease-in-out infinite; }
+  .lg-hero[data-mood="idle"] { background-image: url(assets/character/lumi/lumi-idle.png); }
+  .lg-hero[data-mood="celebrate"] { background-image: url(assets/character/lumi/lumi-celebrate.png); }
+  .lg-friend { width: clamp(120px, 34vw, 168px); aspect-ratio: 1; object-fit: contain;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.45)); animation: heroFloat 4s ease-in-out infinite .4s; }
+  @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .lg-overlay h1 { margin: 0; font-size: clamp(23px, 6.2vw, 33px); font-weight: 900; color: #2a4e5a;
+    background: rgba(255,255,255,.95); padding: 10px 24px; border-radius: 20px; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+  .lg-overlay p { margin: 0; font-size: clamp(17px, 4.4vw, 21px); font-weight: 500; line-height: 1.55; color: #2a4e5a;
+    background: rgba(255,255,255,.9); padding: 14px 22px; border-radius: 18px; max-width: 460px; }
+  .lg-overlay p b { color: var(--coral-deep); font-weight: 800; }
+  .lg-btn-big { font-size: 21px; font-weight: 800; color: #fff; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, var(--coral), var(--coral-deep)); padding: 15px 42px; border-radius: 999px;
+    box-shadow: 0 10px 24px rgba(242,122,82,.5); min-height: 56px; transition: transform .15s ease; }
+  .lg-btn-big:active { transform: scale(.96); }
+  .lg-btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; cursor: pointer;
+    color: #2a4e5a; background: rgba(255,255,255,.85); border: 0; padding: 11px 26px; border-radius: 999px; min-height: 48px; }
+  .lg-btn-ghost:active { transform: scale(.96); }
+</style>
+</head>
+<body>
+  <main class="lg-stage">
+    <div class="lg-hud">
+      <div class="lg-prog" id="prog" aria-label="פנסי שלום שנדלקו"></div>
+      <div class="lg-home" title="הבית של לומי">🏠</div>
+    </div>
+    <div class="lumi-zone"><div id="lumi"></div></div>
+    <div id="stage"></div>
+  </main>
+
+  <div class="lg-overlay" id="introOverlay">
+    <div class="lg-cast">
+      <div class="lg-hero" data-mood="idle"></div>
+      <img class="lg-friend" src="assets/greetings/friend/friend-idle.png" alt="">
+    </div>
+    <h1>פַּנַּס הַשָּׁלוֹם 🏮</h1>
+    <p>בַּכְּנִיסָה לַחוֹרְשָׁה מְחַכֶּה <b>חָבֵר חָדָשׁ</b> 🌙<br>לוּמִי מְנוֹפֵף וְאוֹמֵר שָׁלוֹם.<br>הַקְשִׁיבוּ לַמִּלָּה, וְאִמְרוּ אוֹתָהּ גַּם אַתֶּם.</p>
+    <button class="lg-btn-ghost" id="introSpeaker">🔊 הַקְשִׁיבוּ לַהֶסְבֵּר</button>
+    <button class="lg-btn-big" id="startBtn">בּוֹאוּ נַכִּיר ➜</button>
+  </div>
+
+  <div class="lg-overlay hidden" id="doneOverlay">
+    <div class="lg-cast">
+      <div class="lg-hero" data-mood="celebrate"></div>
+      <img class="lg-friend" src="assets/greetings/friend/friend-wave.png" alt="">
+    </div>
+    <h1>הִדְלַקְתֶּם אֶת כָּל פַּנָּסֵי הַשָּׁלוֹם! 🎉</h1>
+    <p>לוּמִי שָׂמֵחַ שֶׁהִכַּרְתֶּם חָבֵר חָדָשׁ.</p>
+    <button class="lg-btn-big" id="againBtn">עוֹד פַּעַם ➜</button>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>
+  <script src="js/lumi-character.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/mechanics/meet.js"></script>
+  <script src="js/mechanics/produce.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var q = location.search;
+    if (/[?&]frame=1/.test(q)) document.body.classList.add('frame');
+
+    // the 8 greetings — pips light in this order (a friend waves once per word)
+    var WORDS = ['hello', 'hi', 'please', 'thank you', 'yes', 'no', 'sorry', 'bye'];
+    // meet audio_en sequences (same source-of-truth as items/t7-greetingsfriends.json;
+    // the playable minigame builds its own items, like color-beam / find-the-feeling).
+    var SEQ = {
+      hello: ['Hello!', 'Hello!', 'Hi there!'],
+      hi: ['Hi!', 'Hi!', 'Hi there!'],
+      please: ['Please!', 'Please!', 'Yes, please!'],
+      'thank you': ['Thank you!', 'Thank you!', 'Thank you so much!'],
+      yes: ['Yes!', 'Yes!'],
+      no: ['No!', 'No!', 'No, thank you.'],
+      sorry: ['Sorry!', 'Sorry!', "I'm sorry."],
+      bye: ['Bye!', 'Bye!', 'Bye-bye!'],
+    };
+    // the friend art, wired page-locally as the meet "glyph" (shared meet.js untouched).
+    var FRIEND = '<img class="friend" src="assets/greetings/friend/friend-wave.png" alt="">';
+    var GLYPH = {}; WORDS.forEach(function (w) { GLYPH[w] = FRIEND; });
+
+    // the woven session: meet each greeting; echo a few (self-listening produce);
+    // end on the communicative chunk "Hello! My name is ___."
+    var PLAN = [
+      { t: 'meet', w: 'hello' }, { t: 'produce', w: 'hello' },
+      { t: 'meet', w: 'hi' },
+      { t: 'meet', w: 'please' }, { t: 'produce', w: 'please' },
+      { t: 'meet', w: 'thank you' }, { t: 'produce', w: 'thank you' },
+      { t: 'meet', w: 'yes' },
+      { t: 'meet', w: 'no' },
+      { t: 'meet', w: 'sorry' },
+      { t: 'meet', w: 'bye' },
+      { t: 'chunk' },
+    ];
+
+    var stageEl = document.getElementById('stage');
+    var progEl = document.getElementById('prog');
+    var lumi = LumiCharacter.mount(document.getElementById('lumi'));
+    lumi.setMood('glow');
+
+    // progress rail — one warm lantern per greeting met
+    var pips = WORDS.map(function () { var p = document.createElement('span'); p.className = 'lg-pip'; progEl.appendChild(p); return p; });
+    function lightPips(n) { pips.forEach(function (p, i) { p.classList.toggle('lit', i < n); }); }
+
+    // recorded-audio unlock (autoplay policy) — touch every clip once on first gesture
+    function unlockAudio() {
+      Object.keys(LumiAudio.clipMap).forEach(function (k) {
+        try { var a = new Audio(LumiAudio.clipMap[k]); a.preload = 'auto'; var pr = a.play(); if (pr) pr.then(function () { a.pause(); a.currentTime = 0; }).catch(function () {}); } catch (e) {}
+      });
+    }
+
+    function sayHe(clipFile, fallbackText) {
+      try {
+        var a = new Audio('assets/audio/words/' + clipFile);
+        a.onerror = function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} };
+        a.play().catch(function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} });
+      } catch (e) { try { LumiAudio.hebrew(fallbackText); } catch (e2) {} }
+    }
+
+    var pi = 0, lit = 0, autoplay = /[?&]autoplay=1/.test(q);
+    if (autoplay) window.LUMI_AUTOPLAY = true;
+
+    function next() {
+      if (pi >= PLAN.length) return showDone();
+      var beat = PLAN[pi++];
+      stageEl.innerHTML = '';
+      if (beat.t === 'meet') return runMeet(beat.w);
+      if (beat.t === 'produce') return runProduce(beat.w, 'Nice!');
+      if (beat.t === 'chunk') return runProduce('my name is', 'Nice to meet you!', true);
+      return next();
+    }
+
+    // MEET — the friend blooms in, Lumi waves, the greeting plays; a lantern lights.
+    function runMeet(word) {
+      lumi.setMood('happy');
+      var item = { target: [word], media: { img: word, audio_en: SEQ[word] } };
+      LumiMeet.present(stageEl, {
+        item: item, lumi: lumi, emoji: GLYPH,
+        onDone: function () {
+          lit++; lightPips(lit);
+          setTimeout(next, 350);
+        },
+      });
+    }
+
+    // PRODUCE — self-listening loop (record → hear yourself → hear Lumi). Not measured.
+    function runProduce(word, feedback, isChunk) {
+      var item = { target: [word], feedback_en: feedback, record: true, scored: false };
+      if (isChunk) { lumi.setMood('lean'); try { LumiAudio.english('Hello! My name is…'); } catch (e) {} }
+      LumiProduce.present(stageEl, {
+        item: item, lumi: lumi, emoji: {},
+        onDone: function () { setTimeout(next, 250); },
+      });
+    }
+
+    function showDone() {
+      lumi.setMood('glow'); lumi.pulse();
+      document.getElementById('doneOverlay').classList.remove('hidden');
+      sayHe('greet-done-he.mp3', 'הדלקתם את כל פנסי השלום! לומי שמח שהכרתם חבר חדש.');
+    }
+
+    document.getElementById('introSpeaker').addEventListener('click', function () {
+      unlockAudio();
+      sayHe('greet-intro-he.mp3', 'חבר חדש מחכה לכם בחורשה! לומי מנופף ואומר שלום. הקשיבו למילה באנגלית, ואמרו אותה גם אתם.');
+    });
+    document.getElementById('startBtn').addEventListener('click', function () {
+      unlockAudio();
+      document.getElementById('introOverlay').classList.add('hidden');
+      pi = 0; lit = 0; lightPips(0); next();
+    });
+    document.getElementById('againBtn').addEventListener('click', function () {
+      document.getElementById('doneOverlay').classList.add('hidden');
+      pi = 0; lit = 0; lightPips(0); next();
+    });
+
+    // QA: ?autoplay=1 skips the intro and drives meet+produce automatically.
+    if (autoplay) { document.getElementById('introOverlay').classList.add('hidden'); next(); }
+  })();
+  </script>
+</body>
+</html>

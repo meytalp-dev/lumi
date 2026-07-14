@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2e2440">
+<title>Lumi · מַפַּת הַמַּסָּע</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body { font-family: var(--font-ui, 'Heebo', system-ui, sans-serif); color: #fff6ec; }
+
+  /* PORTRAIT illustrated map for phones/tablets; a LANDSCAPE map swaps in on wide screens.
+     var(--map) is set by JS to whichever orientation fits the screen. */
+
+  /* the same map, blurred, fills the whole window so wide screens have no hard seam */
+  .amb { position: fixed; inset: 0; z-index: -1;
+    background: #2e2440 center/cover no-repeat var(--map);
+    filter: blur(32px) brightness(.5) saturate(.9); transform: scale(1.18); }
+
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 6px; }
+
+  /* the crisp map — sized in JS to fit the viewport, so % marker coords land exactly on the art */
+  .mapwrap { position: relative; container-type: size;
+    background: center/cover no-repeat var(--map);
+    border-radius: 20px; box-shadow: 0 22px 60px rgba(0,0,0,.6), 0 0 0 3px rgba(255,246,236,.14); }
+
+  /* a game stop — a glowing tappable disc sitting on its themed clearing */
+  .node { position: absolute; transform: translate(-50%, -50%); z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 1cqmin;
+    background: none; border: 0; padding: 0; cursor: pointer; }
+  .disc { width: 7.4cqmin; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+    color: #5a3a12; font-weight: 900; font-size: 3.6cqmin; line-height: 1;
+    background: radial-gradient(circle at 50% 38%, rgba(255,246,206,.96), rgba(255,205,92,.7) 60%, rgba(255,180,80,.1) 100%);
+    border: 1.5px solid rgba(255,246,236,.85);
+    box-shadow: 0 0 12px 3px rgba(255,210,110,.55), inset 0 0 6px rgba(255,255,255,.7), 0 3px 8px rgba(46,36,64,.4);
+    animation: pulse var(--dur, 3s) ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); }
+                     50% { transform: scale(1.1); } }
+  .node .nm { font-size: 2.5cqmin; font-weight: 800; color: #3a2b2b; white-space: nowrap;
+    background: rgba(255,246,236,.92); padding: .8cqmin 2cqmin; border-radius: 999px;
+    box-shadow: 0 2px 7px rgba(46,36,64,.45); }
+  .node:active .disc { transform: scale(.88); }
+
+  /* Lumi at the trailhead */
+  .start { position: absolute; transform: translate(-50%, -50%); z-index: 3;
+    display: flex; flex-direction: column; align-items: center; gap: 1.4cqh; pointer-events: none; }
+  .start { gap: 1.4cqmin; z-index: 4; }
+  .start .fig { position: relative; width: 23cqmin; aspect-ratio: 1;
+    background: center/contain no-repeat url(assets/character/lumi/lumi-pointing.png);
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,.6)); animation: bob 5s ease-in-out infinite; }
+  /* warm halo so Lumi pops off the busy map */
+  .start .fig::before { content: ""; position: absolute; inset: -14%; z-index: -1; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,224,140,.65) 0%, rgba(255,200,110,.28) 46%, transparent 70%);
+    animation: pulse 3.2s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .start .say { pointer-events: auto; cursor: pointer;
+    font-size: 3.2cqmin; font-weight: 800; color: #fff6ec; text-align: center; white-space: nowrap;
+    padding: 1.1cqmin 3cqmin; border-radius: 999px; background: rgba(224,90,74,.96);
+    box-shadow: 0 7px 18px rgba(224,90,74,.6); transition: transform .12s var(--ease, ease); }
+  .start .say:active { transform: scale(.94); }
+
+  /* slim greeting chip, floating top-center */
+  .top { position: fixed; z-index: 5; top: 0; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 9px; max-width: 92vw;
+    margin-top: max(8px, env(safe-area-inset-top));
+    padding: 7px 16px 7px 12px; border-radius: 999px;
+    background: rgba(46,36,64,.62); backdrop-filter: blur(8px);
+    box-shadow: 0 6px 18px rgba(46,36,64,.5); }
+  .top .lumi { width: 30px; height: 30px; flex: none;
+    background: center/contain no-repeat url(assets/character/lumi/lumi-happy.png); }
+  .top h1 { margin: 0; font-size: clamp(14px, 3.8vw, 18px); font-weight: 900; white-space: nowrap; }
+</style>
+</head>
+<body>
+  <div class="amb"></div>
+  <div class="top">
+    <div class="lumi" aria-hidden="true"></div>
+    <h1 id="hi">מַפַּת הַמַּסָּע 🏮</h1>
+  </div>
+  <div class="stage">
+    <div class="mapwrap" id="mapwrap"></div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // the 12 games, in journey order, each pinned to its themed clearing.
+    // p = PERCENT coords on the PORTRAIT map;  w = PERCENT coords on the WIDE map.
+    var GAMES = [
+      { f: 'farm-path.html',          nm: 'שְׁבִיל הָרֶפֶת',    p: [21, 85], w: [82, 63] },
+      { f: 'safari-beam.html',        nm: 'סָפָארִי',          p: [74, 80], w: [66, 65] },
+      { f: 'fruit-basket.html',       nm: 'סַל הַפֵּרוֹת',      p: [23, 67], w: [39, 71] },
+      { f: 'picnic.html',             nm: 'הַפִּיקְנִיק',       p: [61, 62], w: [17, 79] },
+      { f: 'color-beam.html',         nm: 'הַצְּבָעִים',        p: [24, 52], w: [13, 56] },
+      { f: 'count-the-lanterns.html', nm: 'סְפֹר פַּנָּסִים',   p: [70, 46], w: [32, 45] },
+      { f: 'find-the-feeling.html',   nm: 'הָרֶגֶשׁ',          p: [28, 38], w: [16, 33] },
+      { f: 'lumi-says.html',          nm: 'לוּמִי אוֹמֵר',      p: [72, 32], w: [86, 43] },
+      { f: 't10-face.html',           nm: 'הַפָּנִים',         p: [27, 25], w: [76, 31] },
+      { f: 't11-body.html',           nm: 'גַּע וְזוּז',        p: [63, 24], w: [57, 26] },
+      { f: 'family-photo.html',       nm: 'הַמִּשְׁפָּחָה',     p: [38, 15], w: [36, 20] },
+      { f: 'lantern-of-hello.html',   nm: 'פַּנַּס הַשָּׁלוֹם', p: [70, 15], w: [11, 14] }
+    ];
+    var START = { p: [50, 92], w: [88, 86] };   // where Lumi stands at the trailhead
+
+    // Landscape map art is in place — wide screens get the wide map, phones get portrait.
+    var HAS_WIDE = true;
+    var root = document.documentElement;
+    var landscape = false;
+    function applyMap() {
+      landscape = HAS_WIDE && window.matchMedia('(min-aspect-ratio: 1/1)').matches;
+      var file = landscape
+        ? 'assets/worlds/lantern-grove/maps/journey-map-wide.png'
+        : 'assets/worlds/lantern-grove/maps/journey-map-portrait.png';
+      root.style.setProperty('--map', 'url("' + file + '")');
+      root.style.setProperty('--ar', landscape ? '1536 / 1024' : '1024 / 1536');
+    }
+    applyMap();
+
+    // greet by name and carry it through to each game
+    var name = '';
+    try {
+      var m = /[?&]name=([^&]+)/.exec(location.search);
+      name = m ? decodeURIComponent(m[1]) : (localStorage.getItem('lumi-student-name') || '');
+      if (name) document.getElementById('hi').textContent = name + ', לַמַּסָּע! 🏮';
+    } catch (e) {}
+    var qs = name ? ('?name=' + encodeURIComponent(name)) : '';
+
+    var stage = document.querySelector('.stage');
+    var wrap = document.getElementById('mapwrap');
+
+    // fit the map inside the viewport (contain), with a definite px size so cq units resolve
+    function fit() {
+      var pad = 12;
+      var vw = stage.clientWidth - pad, vh = stage.clientHeight - pad;
+      var ar = landscape ? (1536 / 1024) : (1024 / 1536);  // width / height
+      var w = vw, h = w / ar;
+      if (h > vh) { h = vh; w = h * ar; }
+      wrap.style.width = w + 'px';
+      wrap.style.height = h + 'px';
+    }
+
+    function render() {
+      fit();
+      wrap.innerHTML = '';
+      var key = landscape ? 'w' : 'p';
+
+      GAMES.forEach(function (g, i) {
+        var xy = g[key];
+        var node = document.createElement('button');
+        node.type = 'button'; node.className = 'node';
+        node.style.left = xy[0] + '%'; node.style.top = xy[1] + '%';
+        node.style.setProperty('--dur', (2.6 + (i % 5) * 0.35) + 's');
+        node.setAttribute('aria-label', g.nm);
+        node.innerHTML = '<span class="disc">' + (i + 1) + '</span><span class="nm">' + g.nm + '</span>';
+        node.addEventListener('click', function () { location.href = g.f + qs; });
+        wrap.appendChild(node);
+      });
+
+      var s = START[key];
+      var start = document.createElement('div');
+      start.className = 'start';
+      start.style.left = s[0] + '%'; start.style.top = s[1] + '%';
+      start.innerHTML = '<div class="fig"></div>' +
+        '<button type="button" class="say">בּוֹאוּ נַתְחִיל! ✨</button>';
+      // mapping already ran before the map — "let's begin" launches the journey (first game)
+      start.querySelector('.say').addEventListener('click', function () {
+        location.href = GAMES[0].f + qs;
+      });
+      wrap.appendChild(start);
+    }
+
+    render();
+    // re-render when portrait ⇄ landscape actually flips (new coords + art); else just refit
+    window.addEventListener('resize', function () {
+      var was = landscape;
+      applyMap();
+      if (landscape !== was) render(); else fit();
+    });
+  })();
+  </script>
+</body>
+</html>

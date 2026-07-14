@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2e2440">
+<title>Lumi · צֶבַע הַחוֹרְשָׁה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  :root { --coral: #ff9f7e; --coral-deep: #f27a52; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: Heebo, system-ui, sans-serif;
+    /* the real illustrated Lantern Grove, softly dimmed for focus (the flat gradient is a fallback) */
+    background:
+      linear-gradient(180deg, rgba(46,36,64,.52) 0%, rgba(46,36,64,.16) 40%, rgba(46,36,64,.6) 100%),
+      center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png) fixed,
+      linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 54%, var(--sky-low) 100%) fixed;
+    color: #fff6ec; display: flex; flex-direction: column;
+  }
+  /* ?frame=1 — deterministic 390×844 device box for screenshots */
+  body.frame { width: 390px; height: 844px; margin: 24px auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  html:has(body.frame) { height: auto; background: #111; overflow: auto; }
+
+  /* wrapper must fill the viewport so the flex chain (#stage → .measure-scene) has height */
+  .lg-stage { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+
+  /* ---- HUD: rainbow progress rail (one glow per colour restored) ---- */
+  .lg-hud { position: absolute; top: 0; inset-inline: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .lg-prog { display: flex; gap: 7px; background: rgba(46,36,64,.42); padding: 8px 14px; border-radius: 999px;
+    backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .lg-pip { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.20);
+    position: relative; transition: background .4s ease, box-shadow .4s ease; }
+  .lg-pip.lit { background: var(--pipcol, var(--lantern-glow, #fff0b0)); box-shadow: 0 0 12px 3px var(--pipglow, rgba(255,240,176,.8)); }
+  .lg-home { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); opacity: .9; }
+
+  /* ---- grown-ups strip (?peek=1) — transparent evidence, never a % ---- */
+  .lg-peek { position: absolute; top: 52px; inset-inline: 0; z-index: 35; display: none;
+    justify-content: center; gap: 10px; padding: 4px 10px; }
+  body.peeking .lg-peek { display: flex; }
+  .lg-peek .pk { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+    color: #fff6ec; background: rgba(46,36,64,.5); padding: 4px 10px; border-radius: 999px; }
+  .lg-peek .pk .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.25); }
+  .lg-peek .pk.on .dot { background: var(--lantern-glow); box-shadow: 0 0 8px 2px rgba(255,240,176,.8); }
+
+  /* ---- game stage (mechanic mounts here) ---- */
+  #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 52px 14px 16px; }
+
+  /* ============================================================
+     MEASURED-MECHANIC CHROME (shared contract — target button replays the WORD;
+     options never speak during measurement; first tap SELECTS).
+     ============================================================ */
+  .measure { position: relative; flex: 1; width: 100%; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .measure-top { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; }
+  .measure-instr { font-size: 16px; font-weight: 700; color: #fff6ec; text-shadow: 0 1px 4px rgba(46,36,64,.6); }
+  .target-btn { position: relative; min-width: 128px; height: 74px; padding: 0 28px; border-radius: 999px;
+    background: linear-gradient(160deg, var(--gold), var(--amber)); box-shadow: var(--shadow-card);
+    display: grid; place-items: center; color: var(--dusk-deep); }
+  .target-ic { font-size: 38px; position: relative; z-index: 2; }
+  .target-btn:active { transform: scale(.94); }
+  .target-btn::after { content: ""; position: absolute; inset: -6px; border-radius: 999px;
+    border: 3px solid var(--lantern-glow); opacity: 0; }
+  .target-btn.pinging::after { animation: tping .75s ease-out; }
+  @keyframes tping { 0%{opacity:.85; transform:scale(1)} 100%{opacity:0; transform:scale(1.4)} }
+  .measure-scene { position: relative; flex: 1; min-height: 0; }
+  .help-fab { position: absolute; bottom: 12px; inset-inline-end: 12px; z-index: 8; width: 56px; height: 56px;
+    border-radius: 50%; font-size: 26px; background: var(--card); color: var(--dusk-deep); box-shadow: var(--shadow-card); }
+  .help-fab:active { transform: scale(.94); }
+
+  /* ---- light-beam: a dim TWILIGHT GROVE of colourless orbs; sweep the beam to
+         reveal one in full colour (the light "colours" the grove) ---- */
+  .beam-scene { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; touch-action: none;
+    background: radial-gradient(120% 100% at 50% 118%, #4a3a5e 0%, #35283f 60%, #241a2e 100%); }
+  .beam { position: absolute; width: 200px; height: 200px; transform: translate(-50%,-50%); pointer-events: none;
+    border-radius: 50%; mix-blend-mode: screen;
+    background: radial-gradient(circle, rgba(255,244,224,.62), rgba(255,244,224,.16) 45%, transparent 70%); }
+  .beam-animal { position: absolute; transform: translate(50%,-50%); width: clamp(88px,23vw,132px); height: clamp(88px,23vw,132px);
+    border-radius: 50%; display: grid; place-items: center; font-size: clamp(54px,15vw,82px);
+    opacity: .34; filter: grayscale(.92) brightness(.62); transition: opacity .25s, filter .25s, transform .2s; }
+  .beam-animal.found { opacity: 1; filter: none; }
+  /* real orb PNGs (drop-in) render inside .ba-emoji as full-bleed images */
+  .beam-animal .ba-emoji { display: grid; place-items: center; width: 100%; height: 100%; }
+  .beam-animal .ba-emoji .orb { width: 116%; height: 116%; object-fit: contain; display: block;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+  .beam-animal.armed { transform: translate(50%,-50%) scale(1.14); }
+  .beam-animal.chosen { opacity: 1; filter: none; }
+  .beam-animal.soft { filter: none; opacity: 1; }
+  .beam-animal.beckon { animation: beckon 1s ease-in-out infinite; }
+  @keyframes beckon { 0%,100%{ transform: translate(50%,-50%) scale(1);} 50%{ transform: translate(50%,-50%) scale(1.16);} }
+  .beam-animal.faded { opacity: .1; }
+  /* soft floating motes so the dark grove feels alive, not a quiz grid */
+  .beam-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,240,200,.7), transparent),
+      radial-gradient(2px 2px at 72% 22%, rgba(255,220,235,.6), transparent),
+      radial-gradient(2px 2px at 40% 74%, rgba(210,235,255,.6), transparent),
+      radial-gradient(2px 2px at 84% 66%, rgba(230,220,255,.5), transparent);
+    animation: motes 6s ease-in-out infinite alternate; }
+  @keyframes motes { from { transform: translateY(0); opacity:.35; } to { transform: translateY(-6px); opacity:.6; } }
+
+  /* ---- sparkle (LumiFx.sparkle) ---- */
+  .spark { position: fixed; width: 10px; height: 10px; border-radius: 50%; z-index: 50; pointer-events: none;
+    background: radial-gradient(circle, var(--lantern-glow), var(--gold)); transform: translate(-50%,-50%);
+    animation: sparkFly .72s ease-out forwards; }
+  @keyframes sparkFly { 0%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3)} }
+
+  /* ---- overlays (intro / done) — warm card DNA ---- */
+  .lg-overlay { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 18px; padding: 28px;
+    background: radial-gradient(circle at 50% 30%, rgba(46,36,64,.32), rgba(36,26,46,.66)); }
+  .lg-overlay.hidden { display: none; }
+  .lg-hero { width: clamp(150px, 42vw, 210px); aspect-ratio: 1; background: center/contain no-repeat;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.45)); animation: heroFloat 4s ease-in-out infinite; }
+  .lg-hero[data-mood="idle"] { background-image: url(assets/character/lumi/lumi-idle.png); }
+  .lg-hero[data-mood="celebrate"] { background-image: url(assets/character/lumi/lumi-celebrate.png); }
+  @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .lg-overlay h1 { margin: 0; font-size: clamp(24px, 6.5vw, 34px); font-weight: 900; color: #4a3a5e;
+    background: rgba(255,255,255,.95); padding: 10px 24px; border-radius: 20px; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+  .lg-overlay p { margin: 0; font-size: clamp(17px, 4.4vw, 21px); font-weight: 500; line-height: 1.55; color: #4a3a5e;
+    background: rgba(255,255,255,.9); padding: 14px 22px; border-radius: 18px; max-width: 460px; }
+  .lg-overlay p b { color: var(--coral-deep); font-weight: 800; }
+  .lg-btn-big { font-size: 21px; font-weight: 800; color: #fff; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, var(--coral), var(--coral-deep)); padding: 15px 42px; border-radius: 999px;
+    box-shadow: 0 10px 24px rgba(242,122,82,.5); min-height: 56px; transition: transform .15s ease; }
+  .lg-btn-big:active { transform: scale(.96); }
+  .lg-btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; cursor: pointer;
+    color: #4a3a5e; background: rgba(255,255,255,.85); border: 0; padding: 11px 26px; border-radius: 999px; min-height: 48px; }
+  .lg-btn-ghost:active { transform: scale(.96); }
+</style>
+</head>
+<body>
+  <main class="lg-stage">
+    <div class="lg-hud">
+      <div class="lg-prog" id="prog" aria-label="צבעים שהוחזרו לחורשה"></div>
+      <div class="lg-home" title="הבית של לומי">🏠</div>
+    </div>
+    <div class="lg-peek" id="peek" aria-label="למבוגרים"></div>
+    <div id="stage"></div>
+  </main>
+
+  <div class="lg-overlay" id="introOverlay">
+    <div class="lg-hero" data-mood="idle"></div>
+    <h1>צֶבַע הַחוֹרְשָׁה 🌈</h1>
+    <p>הַצֶּבַע נֶעֱלַם מֵהַחוֹרְשָׁה 🌙<br>הַזִּיזוּ אֶת <b>אֲלֻמַּת הָאוֹר</b> וְהִיא צוֹבַעַת מַה שֶּׁהִיא פּוֹגֶשֶׁת.<br>הַקְשִׁיבוּ לַצֶּבַע וְהָאִירוּ עַל הַכַּדּוּר הַנָּכוֹן.</p>
+    <button class="lg-btn-ghost" id="introSpeaker">🔊 הַקְשִׁיבוּ לַהֶסְבֵּר</button>
+    <button class="lg-btn-big" id="startBtn">בּוֹאוּ נַתְחִיל ➜</button>
+  </div>
+
+  <div class="lg-overlay hidden" id="doneOverlay">
+    <div class="lg-hero" data-mood="celebrate"></div>
+    <h1>הֶחֱזַרְתֶּם אֶת כָּל הַצְּבָעִים! 🎉</h1>
+    <p>הַחוֹרְשָׁה שֶׁל לוּמִי מְלֵאָה צֶבַע שׁוּב!</p>
+    <button class="lg-btn-big" id="againBtn">עוֹד פַּעַם ➜</button>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>\n  <script src="js/profile.js"></script>
+  <script src="js/lumi-character.js"></script>
+  <script src="js/mechanics/_measured-core.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/mechanics/light-beam.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var q = location.search;
+    if (/[?&]frame=1/.test(q)) document.body.classList.add('frame');
+
+    var D = window.LUMI_DATA || { emoji: {}, reps: {} };
+    var WORDS = ['red', 'blue', 'yellow', 'green', 'orange', 'purple', 'pink', 'black', 'white', 'brown'];   // T4 · Colors — all 10 have real orb assets
+    // pip tints so the progress rail literally fills with the colours restored
+    var PIPCOL = { red: '#ff5a52', blue: '#4d8bff', yellow: '#ffd23e', green: '#4fce6b', orange: '#ff993d', purple: '#b06bff',
+      pink: '#ff8fc7', black: '#6b6472', white: '#e8e4ee', brown: '#b07a4f' };
+    // real glowing-orb PNGs (same object, only hue differs → colour is the isolated variable).
+    // Passed to the shared light-beam mechanic as the option glyphs (it injects them as innerHTML),
+    // so the orbs render WITHOUT touching the shared mechanic. Falls back to the emoji orb if an image is missing.
+    var ORB = {};
+    WORDS.forEach(function (w) { ORB[w] = '<img class="orb" src="assets/colors/orbs/orb-' + w + '.png" alt="" onerror="this.replaceWith(document.createTextNode((window.LUMI_DATA.emoji||{})[\'' + w + '\']||\'\'))">'; });
+    var stageEl = document.getElementById('stage');
+    var progEl = document.getElementById('prog');
+    var peekEl = document.getElementById('peek');
+
+    function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+    // rainbow progress rail — one glow per colour restored, tinted to that colour
+    var pips = WORDS.map(function () { var p = document.createElement('span'); p.className = 'lg-pip'; progEl.appendChild(p); return p; });
+    function lightPips(order, n) {
+      pips.forEach(function (p, i) {
+        var on = i < n;
+        p.classList.toggle('lit', on);
+        if (on) { var c = PIPCOL[order[i]] || '#fff0b0'; p.style.setProperty('--pipcol', c); p.style.setProperty('--pipglow', c); }
+        else { p.style.removeProperty('--pipcol'); p.style.removeProperty('--pipglow'); }
+      });
+    }
+
+    // grown-ups strip (?peek=1): transparent chips, lit as each colour is found this session
+    var found = {};
+    if (/[?&]peek=1/.test(q)) document.body.classList.add('peeking');
+    var pkEls = {};
+    WORDS.forEach(function (w) {
+      var el = document.createElement('span'); el.className = 'pk';
+      el.innerHTML = '<span class="dot"></span><span>' + ((D.emoji && D.emoji[w]) || '❔') + '</span>';
+      peekEl.appendChild(el); pkEls[w] = el;
+    });
+    function markFound(w) { found[w] = true; if (pkEls[w]) pkEls[w].classList.add('on'); }
+
+    // recorded-audio unlock (autoplay policy) — touch every clip once on first gesture
+    function unlockAudio() {
+      Object.keys(LumiAudio.clipMap).forEach(function (k) {
+        try { var a = new Audio(LumiAudio.clipMap[k]); a.preload = 'auto'; var pr = a.play(); if (pr) pr.then(function () { a.pause(); a.currentTime = 0; }).catch(function () {}); } catch (e) {}
+      });
+    }
+
+    // an item for `word`: correct = that colour orb, 2 distractors = the SAME orb in
+    // OTHER colours. ISOLATION: shape is constant (an orb) → the child keys on COLOUR.
+    function makeItem(word) {
+      var others = shuffle(WORDS.filter(function (w) { return w !== word; })).slice(0, (window.LumiProfile ? LumiProfile.distractors() : 2));
+      var opts = shuffle([{ img: word, correct: true }].concat(others.map(function (o) { return { img: o, correct: false }; })));
+      return { prompt: { audio_en: word }, options: opts, help_he: 'לוּמִי מְחַפֵּשׂ אֶת הַצֶּבַע', target: [word] };
+    }
+
+    var order = shuffle(WORDS), idx = 0, lit = 0, autoplay = /[?&]autoplay=1/.test(q);
+    if (autoplay) window.LUMI_AUTOPLAY = true;
+
+    function nextRound() {
+      if (idx >= order.length) return showDone();
+      var word = order[idx++];
+      stageEl.innerHTML = '';
+      LumiLightBeam.present(stageEl, {
+        item: makeItem(word), emoji: ORB, lumi: null,
+        targetRep: { glyph: ORB[word] || (D.emoji && D.emoji[word]) || '❔' },
+        instructionHe: idx === 1 ? 'הַקְשִׁיבוּ וְהָאִירוּ' : null, showInstruction: idx === 1,
+        onMeasured: function () {},
+        onDone: function () {
+          markFound(word); lit++; lightPips(order, lit);
+          try { LumiAudio.english('You found it!'); } catch (e) {}
+          setTimeout(nextRound, 950);
+        },
+      });
+    }
+
+    function sayHe(clipFile, fallbackText) {
+      try {
+        var src = 'assets/audio/words/' + clipFile;
+        var a = new Audio(src);
+        a.onerror = function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} };
+        a.play().catch(function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} });
+      } catch (e) { try { LumiAudio.hebrew(fallbackText); } catch (e2) {} }
+    }
+
+    function showDone() {
+      document.getElementById('doneOverlay').classList.remove('hidden');
+      sayHe('color-done-he.mp3', 'החזרתם את כל הצבעים לחורשה!');
+    }
+
+    document.getElementById('introSpeaker').addEventListener('click', function () {
+      unlockAudio();
+      sayHe('color-intro-he.mp3', 'הצבע נעלם מהחורשה. הזיזו את אלומת האור והיא צובעת מה שהיא פוגשת. הקשיבו לצבע והאירו על הכדור הנכון.');
+    });
+    document.getElementById('startBtn').addEventListener('click', function () {
+      unlockAudio();
+      document.getElementById('introOverlay').classList.add('hidden');
+      lightPips(order, 0); nextRound();
+    });
+    document.getElementById('againBtn').addEventListener('click', function () {
+      order = shuffle(WORDS); idx = 0; lit = 0; found = {}; lightPips(order, 0);
+      WORDS.forEach(function (w) { if (pkEls[w]) pkEls[w].classList.remove('on'); });
+      document.getElementById('doneOverlay').classList.add('hidden'); nextRound();
+    });
+
+    // QA: ?reset=1 is a no-op (no persisted state) but keeps a fresh order.
+    // ?autoplay=1 — skip the intro and drive automatically.
+    if (autoplay) { document.getElementById('introOverlay').classList.add('hidden'); nextRound(); }
+  })();
+  </script>
+</body>
+</html>

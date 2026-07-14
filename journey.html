@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Lumi · מסע החיות</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+/* ============================================================
+   journey.html — the Animals lantern-path. Sunset DNA (tokens.css).
+   Component styles live here to keep the pilot self-contained.
+   ============================================================ */
+
+/* ---- the real illustrated Lantern Grove, softly dimmed for focus (like the
+       lantern-grove pilot) — the flat gradient is only a fallback beneath it ---- */
+.sky {
+  position: fixed; inset: 0; overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(46,36,64,.50) 0%, rgba(46,36,64,.12) 38%, rgba(46,36,64,.58) 100%),
+    center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png),
+    radial-gradient(120% 80% at 50% 108%, var(--sky-glow) 0%, var(--sky-low) 22%, var(--sky-mid) 55%, var(--sky-top) 100%);
+}
+.sky::after { /* soft stars up high */
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 20% 15%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1.5px 1.5px at 68% 10%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1.5px 1.5px at 82% 22%, rgba(255,255,255,.5), transparent),
+    radial-gradient(2px 2px at 42% 8%, rgba(255,255,255,.55), transparent);
+}
+
+.app {
+  position: relative; z-index: 1;
+  height: 100%; display: flex; flex-direction: column;
+  max-width: 640px; margin: 0 auto; padding: 14px 16px 18px;
+}
+
+/* ---- header: beat label + lantern path ---- */
+.journey-top { display: flex; align-items: center; gap: 12px; }
+.beat-label {
+  font-size: 15px; font-weight: 800; color: #fff6ec;
+  background: rgba(46,36,64,.32); padding: 6px 14px; border-radius: 999px;
+  min-width: 74px; text-align: center; backdrop-filter: blur(4px);
+}
+.peek-toggle {
+  margin-inline-start: auto; font-size: 13px; font-weight: 700;
+  color: #fff6ec; background: rgba(46,36,64,.32); border-radius: 999px;
+  padding: 6px 12px;
+}
+
+/* ---- the path of lanterns ---- */
+.path {
+  display: flex; justify-content: center; align-items: flex-end;
+  gap: 10px; padding: 14px 4px 6px; min-height: 66px;
+}
+.lantern {
+  position: relative; width: 46px; height: 58px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  transition: transform .4s var(--ease);
+}
+.lantern-flame {
+  position: absolute; top: 4px; width: 30px; height: 34px; border-radius: 50% 50% 46% 46%;
+  background: radial-gradient(circle at 50% 40%, var(--lantern-glow), var(--lantern-lit) 55%, var(--amber) 100%);
+  box-shadow: 0 0 18px 4px var(--lantern-lit), 0 0 40px 10px var(--lantern-glow);
+  opacity: 0; transform: scale(.5); transition: opacity .5s, transform .5s var(--ease);
+}
+.lantern-emoji {
+  font-size: 22px; filter: grayscale(.6) brightness(.7); transition: filter .5s;
+  position: relative; z-index: 2;
+}
+.lantern--unmet { opacity: .45; }
+.lantern--unmet .lantern-emoji { filter: grayscale(1) brightness(.55); }
+.lantern--dim  .lantern-flame { opacity: .4; transform: scale(.8); }
+.lantern--dim  .lantern-emoji { filter: grayscale(.3) brightness(.9); }
+.lantern--lit  .lantern-flame { opacity: 1; transform: scale(1); animation: flicker 2.4s ease-in-out infinite; }
+.lantern--lit  .lantern-emoji { filter: none; }
+.lantern--lit  { transform: translateY(-4px); }
+@keyframes flicker { 0%,100%{opacity:1} 45%{opacity:.82} 70%{opacity:.95} }
+
+/* ---- Lumi ---- */
+.lumi-zone { display: flex; justify-content: center; padding: 6px 0 2px; }
+.lumi { position: relative; }
+.lumi-stage { width: 128px; height: 138px; position: relative; }
+.lumi-svg { width: 100%; height: 100%; overflow: visible; }
+.lumi-aura { transform-origin: 60px 60px; animation: breathe 3.4s ease-in-out infinite; }
+.lumi-core { transform-origin: 60px 58px; }
+.lumi-eye  { fill: var(--dusk-deep); transition: all .25s; }
+.lumi-spark{ fill: #fff; }
+.lumi-smile{ fill: none; stroke: var(--dusk-deep); stroke-width: 3.4; stroke-linecap: round; transition: d .25s; }
+.lumi-cheek{ fill: var(--coral); opacity: .5; }
+.lumi-arm  { fill: none; stroke: var(--gold); stroke-width: 6; stroke-linecap: round; opacity: .85; transition: all .3s var(--ease); }
+.lumi-point{ fill: var(--gold); opacity: 0; transition: opacity .25s; }
+@keyframes breathe { 0%,100%{opacity:.55; transform:scale(1)} 50%{opacity:.8; transform:scale(1.08)} }
+
+.lumi-stage { animation: float 4s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+
+/* mood variants */
+.lumi-stage[data-mood="listen"] .lumi-arm-l { d: path("M28 74 q-20 -4 -22 -20"); }
+.lumi-stage[data-mood="listen"] .lumi-arm-r { d: path("M92 74 q20 -4 22 -20"); }
+.lumi-stage[data-mood="points"] .lumi-point { opacity: 1; animation: pointBob 1s ease-in-out infinite; }
+.lumi-stage[data-mood="points"] { transform: rotate(-4deg); }
+@keyframes pointBob { 0%,100%{transform:translateX(0)} 50%{transform:translateX(5px)} }
+.lumi-stage[data-mood="hug"]   .lumi-arm-l { d: path("M28 74 q18 14 30 6"); }
+.lumi-stage[data-mood="hug"]   .lumi-arm-r { d: path("M92 74 q-18 14 -30 6"); }
+.lumi-stage[data-mood="hug"]   .lumi-aura  { opacity: .9 !important; transform: scale(1.15) !important; }
+.lumi-stage[data-mood="lean"]  { transform: rotate(6deg) translateY(-2px); }
+.lumi-stage[data-mood="dim"]   .lumi-aura  { opacity: .3 !important; animation: none; }
+.lumi-stage[data-mood="dim"]   .lumi-core  { filter: saturate(.7) brightness(.92); }
+.lumi-stage[data-mood="dim"]   .lumi-smile { d: path("M50 72 q10 4 20 0"); }
+.lumi-stage[data-mood="glow"]  .lumi-aura  { opacity: 1 !important; transform: scale(1.3) !important; }
+.lumi-stage[data-mood="glow"]  .lumi-core  { filter: brightness(1.12); }
+.lumi-stage[data-mood="happy"] .lumi-smile { d: path("M48 68 q12 12 24 0"); }
+
+.lumi-stage.lumi-pulse { animation: lumiPulse .7s var(--ease); }
+@keyframes lumiPulse { 0%{transform:scale(1)} 40%{transform:scale(1.14)} 100%{transform:scale(1)} }
+
+.lumi-bubble {
+  position: absolute; top: -6px; inset-inline-start: 100%;
+  background: var(--card); border-radius: 16px; padding: 8px 12px;
+  box-shadow: var(--shadow-soft); font-size: 22px;
+}
+
+/* ---- stage (mechanics mount) ---- */
+.stage { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+
+/* ---- choice mechanic ---- */
+.choice { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.choice-prompt { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.prompt-replay {
+  width: var(--touch); height: var(--touch); border-radius: 50%;
+  background: linear-gradient(160deg, var(--gold), var(--amber));
+  box-shadow: var(--shadow-card); display: grid; place-items: center;
+  font-size: 30px; transition: transform .15s var(--ease);
+}
+.prompt-replay:active { transform: scale(.92); }
+.choice-instr {
+  font-size: 17px; font-weight: 700; color: #fff6ec; text-shadow: 0 1px 4px rgba(46,36,64,.5);
+}
+.choice-cards { display: flex; gap: var(--gap); flex-wrap: wrap; justify-content: center; }
+.card {
+  width: 108px; height: 118px; border-radius: var(--radius);
+  background: var(--card); border: 3px solid var(--card-edge);
+  box-shadow: var(--shadow-card); display: grid; place-items: center;
+  transition: transform .18s var(--ease), border-color .2s, box-shadow .2s, opacity .3s;
+}
+.card:active { transform: scale(.95); }
+.card-emoji { font-size: 56px; line-height: 1; }
+.card--armed { border-color: var(--gold); transform: translateY(-6px) scale(1.03); box-shadow: 0 14px 30px rgba(245,151,43,.4); }
+.card--correct { border-color: var(--sage); background: #f0f8f0; animation: pop .5s var(--ease); }
+.card--soft { border-color: var(--peach); opacity: .9; } /* gentle, never red */
+.card--faded { opacity: .28; filter: grayscale(.6); }
+.card--beckon { animation: beckon 1s ease-in-out infinite; border-color: var(--gold); }
+@keyframes pop { 0%{transform:scale(1)} 45%{transform:scale(1.12)} 100%{transform:scale(1)} }
+@keyframes beckon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px) scale(1.04)} }
+
+.help-btn {
+  width: 52px; height: 52px; border-radius: 50%; font-size: 22px;
+  background: rgba(255,246,236,.9); box-shadow: var(--shadow-soft);
+  align-self: center;
+}
+
+/* ---- meet ---- */
+.meet { display: flex; justify-content: center; align-items: center; }
+.meet-scene { position: relative; width: 200px; height: 200px; display: grid; place-items: center;
+  opacity: 0; transform: scale(.6); transition: opacity .6s, transform .7s var(--ease); }
+.meet-scene.meet-in { opacity: 1; transform: scale(1); }
+.meet-halo { position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, var(--lumi-aura), transparent 70%);
+  animation: breathe 3s ease-in-out infinite; }
+.meet-emoji { font-size: 116px; position: relative; z-index: 2; filter: drop-shadow(0 8px 18px rgba(46,36,64,.4)); }
+
+/* ---- produce ---- */
+.produce { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.mic-btn { position: relative; width: 96px; height: 96px; border-radius: 50%;
+  background: linear-gradient(160deg, var(--coral), var(--coral-deep));
+  box-shadow: var(--shadow-card); display: grid; place-items: center; font-size: 44px; }
+.mic-ring { position: absolute; inset: -6px; border-radius: 50%; border: 4px solid var(--coral);
+  opacity: 0; }
+.mic-btn.mic--live .mic-ring { opacity: 1; animation: ring 1s ease-out infinite; }
+.mic-btn.mic--heard { background: linear-gradient(160deg, var(--gold), var(--amber)); }
+@keyframes ring { 0%{transform:scale(1); opacity:.8} 100%{transform:scale(1.5); opacity:0} }
+.skip-btn { font-size: 15px; font-weight: 700; color: #fff6ec; background: rgba(46,36,64,.3);
+  padding: 10px 20px; border-radius: 999px; }
+
+/* ---- finale ---- */
+.finale { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; position: relative; }
+.finale-glow { position: absolute; top: -30px; width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, var(--lumi-aura), transparent 68%); animation: breathe 3s ease-in-out infinite; }
+.finale-lanterns { display: flex; gap: 8px; z-index: 2; }
+.finale-tagline { font-size: 22px; font-weight: 800; color: #fff6ec; text-shadow: 0 2px 8px rgba(46,36,64,.6); z-index: 2; }
+.finale-parent { background: var(--panel); border-radius: var(--radius); padding: 14px 18px; max-width: 420px;
+  font-size: 14px; line-height: 1.6; color: var(--ink); box-shadow: var(--shadow-soft); z-index: 2; }
+.finale-again { font-size: 16px; font-weight: 800; color: var(--dusk-deep);
+  background: linear-gradient(160deg, var(--gold), var(--amber)); padding: 12px 28px; border-radius: 999px;
+  box-shadow: var(--shadow-card); z-index: 2; }
+
+/* ---- BKT peek (grown-ups only) ---- */
+.peek { position: fixed; inset-inline-end: 12px; bottom: 12px; width: 240px; z-index: 20;
+  background: var(--panel); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow-card);
+  display: none; }
+.peek.peek--open { display: block; }
+.peek h4 { margin: 0 0 8px; font-size: 13px; color: var(--dusk-deep); }
+.peek-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+.peek-emoji { font-size: 18px; }
+.peek-bar { flex: 1; height: 8px; background: #eadfce; border-radius: 999px; overflow: hidden; }
+.peek-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--sage), var(--gold)); }
+.peek-num { min-width: 74px; text-align: end; color: var(--ink-soft); }
+
+/* ---- intro overlay ---- */
+.intro { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 22px; text-align: center; padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(46,36,64,.55) 0%, rgba(46,36,64,.22) 40%, rgba(46,36,64,.66) 100%),
+    center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png),
+    radial-gradient(120% 80% at 50% 108%, var(--sky-glow) 0%, var(--sky-low) 24%, var(--sky-mid) 58%, var(--sky-top) 100%); }
+.intro-lumi { width: 150px; height: 160px; }
+.intro-title { font-size: 30px; font-weight: 800; color: #fff6ec; text-shadow: 0 2px 10px rgba(46,36,64,.6); }
+.intro-tag { font-size: 18px; color: #ffe8d2; max-width: 360px; line-height: 1.5; }
+.intro-tag .en { display: block; opacity: .8; font-size: 15px; margin-top: 4px; }
+.intro-parent { max-width: 380px; font-size: 13.5px; line-height: 1.6; color: var(--ink);
+  background: var(--panel); border-radius: var(--radius); padding: 12px 16px; box-shadow: var(--shadow-soft); }
+.intro-start { font-size: 20px; font-weight: 800; color: var(--dusk-deep);
+  background: linear-gradient(160deg, var(--gold), var(--amber)); padding: 16px 44px; border-radius: 999px;
+  box-shadow: var(--shadow-card); min-height: var(--touch); }
+.intro--hidden { display: none; }
+
+/* ---- sparkles ---- */
+.spark { position: fixed; width: 10px; height: 10px; border-radius: 50%; z-index: 40; pointer-events: none;
+  background: radial-gradient(circle, var(--lantern-glow), var(--gold)); transform: translate(-50%,-50%);
+  animation: sparkFly .72s ease-out forwards; }
+@keyframes sparkFly { 0%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3)} }
+
+/* ============================================================
+   v2 MEASURED-MECHANIC CHROME (shared by path-choice / light-beam / scene-hide)
+   The CENTRAL TARGET button replays the target word/chunk — options never speak
+   during measurement. First tap on an option SELECTS (the two-tap fix, §1).
+   ============================================================ */
+.measure { position: relative; flex: 1; width: 100%; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.measure-top { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; }
+.measure-instr { font-size: 16px; font-weight: 700; color: #fff6ec; text-shadow: 0 1px 4px rgba(46,36,64,.55); }
+.target-btn { position: relative; min-width: 128px; height: 74px; padding: 0 28px; border-radius: 999px;
+  background: linear-gradient(160deg, var(--gold), var(--amber)); box-shadow: var(--shadow-card);
+  display: grid; place-items: center; color: var(--dusk-deep); }
+.target-ic { font-size: 38px; position: relative; z-index: 2; }
+.target-btn:active { transform: scale(.94); }
+.target-btn::after { content: ""; position: absolute; inset: -6px; border-radius: 999px;
+  border: 3px solid var(--lantern-glow); opacity: 0; }
+.target-btn.pinging::after { animation: tping .75s ease-out; }
+@keyframes tping { 0%{opacity:.85; transform:scale(1)} 100%{opacity:0; transform:scale(1.4)} }
+.measure-scene { position: relative; flex: 1; min-height: 0; }
+
+/* ---- path-choice: trails fork away, lead Lumi to the animal ---- */
+.paths { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center;
+  gap: clamp(10px, 5vw, 30px); padding-bottom: 6px; }
+.paths .fork { position: absolute; bottom: -2px; inset-inline-start: 50%; transform: translateX(50%);
+  font-size: 26px; z-index: 4; filter: drop-shadow(0 0 12px var(--lantern-glow)); }
+.trail { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  transition: opacity .4s; }
+.trail-line { width: 6px; flex: 1; min-height: 34px; margin-bottom: 8px; border-radius: 6px; opacity: .5;
+  background: repeating-linear-gradient(180deg, var(--lantern-glow) 0 7px, transparent 7px 17px); }
+.trail-animal { width: clamp(84px, 22vw, 116px); height: clamp(84px, 22vw, 116px); border-radius: 26px;
+  background: var(--card); border: 3px solid var(--card-edge); box-shadow: var(--shadow-card);
+  display: grid; place-items: center; transition: transform .18s var(--ease), border-color .2s, box-shadow .3s; }
+.trail-animal:active { transform: scale(.95); }
+.ta-emoji { font-size: clamp(46px, 12vw, 64px); line-height: 1; }
+.trail-animal.armed { transform: translateY(-6px) scale(1.05); border-color: var(--gold); box-shadow: 0 0 22px 5px rgba(255,210,120,.5); }
+.trail-animal.soft { border-color: var(--peach); }
+.trail.chosen .trail-line { opacity: 1; }
+.trail.chosen .trail-animal { border-color: var(--sage); background: #f1faf1; }
+.paths.leading .trail:not(.chosen) { opacity: .45; }
+.trail.beckon .trail-animal { animation: beckon 1s ease-in-out infinite; border-color: var(--gold); }
+.trail.faded { opacity: .3; filter: grayscale(.6); pointer-events: none; }
+
+/* ---- light-beam: a night field of silhouettes; sweep a beam to find one ---- */
+.beam-scene { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; touch-action: none;
+  background: radial-gradient(120% 100% at 50% 120%, #2c2244 0%, #1d1730 70%, #171225 100%); }
+.beam { position: absolute; width: 190px; height: 190px; transform: translate(-50%,-50%); pointer-events: none;
+  border-radius: 50%; mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255,240,190,.55), rgba(255,240,190,.14) 45%, transparent 70%); }
+.beam-animal { position: absolute; transform: translate(50%,-50%); width: clamp(64px,16vw,92px); height: clamp(64px,16vw,92px);
+  border-radius: 50%; display: grid; place-items: center; font-size: clamp(40px,10vw,58px);
+  opacity: .3; filter: grayscale(.75) brightness(.55); transition: opacity .25s, filter .25s, transform .2s; }
+.beam-animal.found { opacity: 1; filter: none; }
+.beam-animal.armed { transform: translate(50%,-50%) scale(1.14); }
+.beam-animal.chosen { opacity: 1; filter: none; }
+.beam-animal.soft { filter: none; opacity: 1; }
+.beam-animal.beckon { animation: beckon 1s ease-in-out infinite; }
+.beam-animal.faded { opacity: .1; }
+
+/* ---- scene-hide: peekers sit in a world (peeker styles from components.css) ---- */
+.hide-scene { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; }
+.hide-scene .scene-bg { border-radius: 20px; }
+
+/* ---- woven parent moment (§7) ---- */
+.parent-moment { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; padding: 8px; }
+.pm-badge { font-weight: 800; color: var(--dusk-deep); background: var(--gold); padding: 6px 16px; border-radius: 999px; }
+.pm-body { background: var(--panel); border-radius: var(--radius); padding: 14px 18px; max-width: 430px;
+  font-size: 15px; line-height: 1.65; color: var(--ink); box-shadow: var(--shadow-soft); }
+.pm-body b[lang="en"] { direction: ltr; unicode-bidi: isolate; }
+
+/* ---- produce self-listening loop (§6) ---- */
+.produce-loop { display: flex; gap: 16px; }
+.loop-btn { width: 74px; height: 74px; border-radius: 50%; font-size: 34px;
+  background: var(--card); box-shadow: var(--shadow-card); display: grid; place-items: center; }
+.loop-btn:disabled { opacity: .4; }
+.produce-actions { display: flex; gap: 14px; }
+.again-btn, .continue-btn { font-size: 16px; font-weight: 800; padding: 12px 22px; border-radius: 999px;
+  box-shadow: var(--shadow-card); min-height: 48px; }
+.again-btn { background: var(--card); color: var(--dusk-deep); }
+.continue-btn { background: linear-gradient(160deg, var(--gold), var(--amber)); color: var(--dusk-deep); }
+
+/* ---- transparent grown-ups evidence panel (§5) ---- */
+.peek-legend { font-size: 10px; color: var(--ink-soft); margin-bottom: 8px; line-height: 1.45; }
+.peek-word { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; font-size: 13px; }
+.pw-emoji { font-size: 18px; }
+.ev { font-size: 14px; filter: grayscale(1); opacity: .28; }
+.ev.on { filter: none; opacity: 1; }
+.pw-ctx { font-size: 11px; color: var(--ink-soft); margin-inline-start: auto; }
+.peek-foot { font-size: 10px; color: var(--ink-soft); margin-top: 8px; line-height: 1.45;
+  border-top: 1px solid #eadfce; padding-top: 6px; }
+
+/* ---- finale: a gate of light (§8) ---- */
+.finale-gate { font-size: 64px; z-index: 2; filter: drop-shadow(0 0 22px var(--lantern-glow)); animation: breathe 3s ease-in-out infinite; }
+.finale-map { font-size: 14px; color: #ffe8d2; z-index: 2; }
+.finale-parent b[lang="en"] { direction: ltr; unicode-bidi: isolate; }
+</style>
+</head>
+<body>
+<div class="sky"></div>
+
+<div class="app">
+  <div class="journey-top">
+    <div class="beat-label" id="beatLabel">מסע</div>
+    <button class="peek-toggle" id="peekToggle" type="button">לַמְּבֻגָּרִים</button>
+  </div>
+  <div class="path" id="path" aria-hidden="true"></div>
+  <div class="lumi-zone"><div id="lumi"></div></div>
+  <div class="stage" id="stage"></div>
+</div>
+
+<aside class="peek" id="peek"><h4>מה לומי יודע על כל מילה</h4><div id="peekBody"></div></aside>
+
+<!-- intro -->
+<div class="intro" id="intro">
+  <div class="intro-lumi" id="introLumi"></div>
+  <div class="intro-title">לוּמִי</div>
+  <div class="intro-tag">
+    לוּמִי מְחַפֵּשׂ שַׁעֲרֵי־אוֹר בְּעוֹלָם שֶׁל חַיּוֹת. כָּל מִלָּה שֶׁתְּגַלּוּ מְאִירָה פָּנָס וּפוֹתַחַת אֶת הַדֶּרֶךְ הָלְאָה.
+    <span class="en" lang="en">Every word opens the way</span>
+  </div>
+  <div class="intro-parent" lang="he">
+    <strong>לַהוֹרֶה (10 שְׁנִיּוֹת):</strong> הַיּוֹם לוּמִי יִפְגּוֹשׁ חַיּוֹת. אֵין צֹרֶךְ לְתַרְגֵּם —
+    תְּנוּ לַיֶּלֶד.ה לְהַקְשִׁיב לָאַנְגְּלִית, לְהַבִּיט בַּתְּמוּנָה וּלְנַסּוֹת.
+  </div>
+  <button class="intro-start" id="startBtn" type="button">▶ בּוֹאוּ נַתְחִיל</button>
+</div>
+
+<!-- data + engine (order matters) -->
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/lumi-character.js"></script>
+<script src="js/bkt.js"></script>
+<script src="js/resolve-practice.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/mechanics/_measured-core.js"></script>
+<script src="js/mechanics/_choice.js"></script>
+<script src="js/mechanics/meet.js"></script>
+<script src="js/mechanics/path-choice.js"></script>
+<script src="js/mechanics/light-beam.js"></script>
+<script src="js/mechanics/scene-hide.js"></script>
+<script src="js/mechanics/function.js"></script>
+<script src="js/mechanics/produce.js"></script>
+<script src="js/engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var LEARNER = 'pilot-child';
+  // Persist across sittings (Meytal 13.7): BKT, contexts, reps & discriminate wins
+  // accrue day to day. A lantern in-progress resumes next session. ?reset=1 clears.
+  if (/[?&]reset=1/.test(location.search)) {
+    try { localStorage.removeItem('lumi-bkt-v1'); localStorage.removeItem('lumi-history-v1'); } catch (e) {}
+  }
+
+  // QA-only: ?autoplay=1 auto-answers so the whole journey renders for review.
+  if (/[?&]autoplay=1/.test(location.search)) window.LUMI_AUTOPLAY = true;
+
+  var lumiCtrl = LumiCharacter.mount(document.getElementById('lumi'));
+  var introCtrl = LumiCharacter.mount(document.getElementById('introLumi'));
+  introCtrl.setMood('glow');
+
+  // peek panel toggle (grown-ups only)
+  var peek = document.getElementById('peek');
+  document.getElementById('peekToggle').addEventListener('click', function () {
+    peek.classList.toggle('peek--open');
+  });
+  if (/[?&]peek=1/.test(location.search)) peek.classList.add('peek--open');
+
+  function boot() {
+    document.getElementById('intro').classList.add('intro--hidden');
+    LumiEngine.start({
+      learnerId: LEARNER,
+      subtopic: 'pets',
+      lumi: lumiCtrl,
+      stageRoot: document.getElementById('stage'),
+      pathRoot: document.getElementById('path'),
+      headerRoot: document.getElementById('beatLabel'),
+      peekRoot: document.getElementById('peekBody'),
+    });
+  }
+
+  document.getElementById('startBtn').addEventListener('click', boot);
+
+  // ---- QA harness (?qa=path|beam|scene|produce|parent|finale) — render ONE
+  //      screen in isolation for headless screenshot verification. Not a child path.
+  function qaRender(which) {
+    document.getElementById('intro').classList.add('intro--hidden');
+    var D = window.LUMI_DATA, stage = document.getElementById('stage');
+    function find(dim, word) {
+      return D.items.filter(function (it) {
+        return it.subtopic === 'pets' && it.dimension === dim && it.target[0] === word;
+      })[0];
+    }
+    var reps = (D.reps || {});
+    lumiCtrl.setMood('listen');
+    if (which === 'path') {
+      LumiPathChoice.present(stage, { item: find('recognize','dog'), lumi: lumiCtrl, emoji: D.emoji,
+        reps: reps, targetRep: reps.dog[0], instructionHe: D.instructions.listen_and_choose.he, showInstruction: true,
+        onMeasured: function(){}, onDone: function(){} });
+    } else if (which === 'beam') {
+      LumiLightBeam.present(stage, { item: find('recognize','dog'), lumi: lumiCtrl, emoji: D.emoji,
+        reps: reps, targetRep: reps.dog[1], instructionHe: D.instructions.listen_and_choose.he, showInstruction: true,
+        onMeasured: function(){}, onDone: function(){} });
+    } else if (which === 'careful') {
+      LumiLightBeam.present(stage, { item: find('discriminate','dog'), lumi: lumiCtrl, emoji: D.emoji,
+        reps: reps, targetRep: reps.dog[2] || reps.dog[1], instructionHe: D.instructions.listen_and_choose.he, showInstruction: true,
+        onMeasured: function(){}, onDone: function(){} });
+    } else if (which === 'scene') {
+      LumiSceneHide.present(stage, { item: find('comprehend','dog'), lumi: lumiCtrl, emoji: D.emoji,
+        reps: reps, targetRep: reps.dog[0], instructionHe: D.instructions.find_it.he, showInstruction: true,
+        onMeasured: function(){}, onDone: function(){} });
+    } else if (which === 'produce') {
+      LumiProduce.present(stage, { item: find('produce','dog'), lumi: lumiCtrl, emoji: D.emoji, learnerId: LEARNER, onDone: function(){} });
+    } else if (which === 'parent') {
+      stage.innerHTML = '<div class="parent-moment" lang="he"><div class="pm-badge">רֶגַע לַהוֹרֶה</div>' +
+        '<p class="pm-body">בַּדֶּרֶךְ לַמִּטְבָּח שַׁאֲלוּ: <b lang="en">Where is the dog?</b> אֶפְשָׁר לְהַצְבִּיעַ עַל צַעֲצוּעַ.</p>' +
+        '<button class="btn-big">הַמְשִׁיכוּ ➜</button></div>';
+    }
+  }
+  var qa = (location.search.match(/[?&]qa=([a-z]+)/) || [])[1];
+  if (qa) { setTimeout(function () { qaRender(qa); }, 200); return; }
+
+  // auto-boot when opened headless (?auto=1) for screenshot verification.
+  if (/[?&]auto=1/.test(location.search)) setTimeout(boot, 300);
+})();
+</script>
+</body>
+</html>

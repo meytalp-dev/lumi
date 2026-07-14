@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3a2c50">
+<title>Lumi · תְּמוּנַת הַמִּשְׁפָּחָה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  :root { --coral: #f4785f; --coral-deep: #e05a4a; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: Heebo, system-ui, sans-serif;
+    /* warm dusk DNA (locked sunset palette) framing a cozy family room */
+    background:
+      linear-gradient(180deg, rgba(46,36,64,.48) 0%, rgba(46,36,64,.14) 42%, rgba(46,36,64,.58) 100%),
+      center/cover no-repeat url(assets/worlds/family/room-bg.png) fixed,
+      linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 52%, var(--sky-low) 100%) fixed;
+    color: #fff6ec; display: flex; flex-direction: column;
+  }
+  /* ?frame=1 — deterministic 390×844 device box for screenshots */
+  body.frame { width: 390px; height: 844px; margin: 24px auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  html:has(body.frame) { height: auto; background: #111; overflow: auto; }
+
+  /* wrapper must fill the viewport so the flex chain (#stage → .measure → .measure-scene)
+     has height — gucha: without a sized .lg-stage the chain collapses to 0 and the stage
+     looks "empty". Reference: safari-beam.html. */
+  .lg-stage { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+
+  /* ---- HUD: warm progress rail (one glow per family member found) ---- */
+  .lg-hud { position: absolute; top: 0; inset-inline: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .lg-prog { display: flex; gap: 7px; background: rgba(58,44,80,.42); padding: 8px 14px; border-radius: 999px;
+    backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .lg-pip { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.20);
+    position: relative; transition: background .4s ease, box-shadow .4s ease; }
+  .lg-pip.lit { background: var(--lantern-glow, #fff0b0); box-shadow: 0 0 12px 3px rgba(255,240,176,.8); }
+  .lg-home { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); opacity: .9; }
+
+  /* ---- grown-ups strip (?peek=1) — transparent evidence, never a % ---- */
+  .lg-peek { position: absolute; top: 52px; inset-inline: 0; z-index: 35; display: none;
+    justify-content: center; gap: 10px; padding: 4px 10px; }
+  body.peeking .lg-peek { display: flex; flex-wrap: wrap; }
+  .lg-peek .pk { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+    color: #fff6ec; background: rgba(58,44,80,.5); padding: 4px 10px; border-radius: 999px; }
+  .lg-peek .pk .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.25); }
+  .lg-peek .pk.on .dot { background: var(--lantern-glow); box-shadow: 0 0 8px 2px rgba(255,240,176,.8); }
+
+  /* ---- game stage (mechanic mounts here) ---- */
+  #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 52px 14px 16px; }
+
+  /* ============================================================
+     MEASURED-MECHANIC CHROME (shared contract — target button replays the CHUNK;
+     options never speak during measurement; first tap SELECTS).
+     ============================================================ */
+  .measure { position: relative; flex: 1; width: 100%; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .measure-top { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; }
+  .measure-instr { font-size: 16px; font-weight: 700; color: #fff6ec; text-shadow: 0 1px 4px rgba(46,36,64,.6); }
+  .target-btn { position: relative; min-width: 128px; height: 74px; padding: 0 28px; border-radius: 999px;
+    background: linear-gradient(160deg, var(--gold), var(--amber)); box-shadow: var(--shadow-card);
+    display: grid; place-items: center; color: var(--dusk-deep); }
+  .target-ic { font-size: 38px; position: relative; z-index: 2; }
+  .target-btn:active { transform: scale(.94); }
+  .target-btn::after { content: ""; position: absolute; inset: -6px; border-radius: 999px;
+    border: 3px solid var(--lantern-glow); opacity: 0; }
+  .target-btn.pinging::after { animation: tping .75s ease-out; }
+  @keyframes tping { 0%{opacity:.85; transform:scale(1)} 100%{opacity:0; transform:scale(1.4)} }
+  .measure-scene { position: relative; flex: 1; min-height: 0; }
+  .help-fab { position: absolute; bottom: 12px; inset-inline-end: 12px; z-index: 8; width: 56px; height: 56px;
+    border-radius: 50%; font-size: 26px; background: var(--card); color: var(--dusk-deep); box-shadow: var(--shadow-card); }
+  .help-fab:active { transform: scale(.94); }
+
+  /* ============================================================
+     SCENE-HIDE: a warm FAMILY PHOTO. Members sit in the room; Lumi asks a whole
+     chunk ("Where is my mum?") and the child finds & taps that family member.
+     The mechanic (scene-hide.js) owns .hide-scene / .peeker; all visuals are here.
+     ============================================================ */
+  .hide-scene { position: absolute; inset: 0; border-radius: 18px; overflow: hidden;
+    /* the family room (rembg-kept opaque) sits inside a soft white photo mat */
+    background:
+      linear-gradient(180deg, rgba(255,246,236,.10), rgba(46,36,64,.14)),
+      url(assets/worlds/family/room-bg.png) center 34% / cover no-repeat,
+      radial-gradient(120% 100% at 50% 116%, #6b5680 0%, #4a3a5c 60%, #2e2440 100%);
+    box-shadow: inset 0 0 0 6px rgba(255,246,236,.92), inset 0 0 0 8px rgba(255,227,196,.9),
+      inset 0 14px 40px rgba(46,36,64,.28); }
+  /* the shared SVG landscape backdrop (LumiScene.backdropScene) is not our world → hide it */
+  .hide-scene .scene-bg { display: none; }
+
+  /* each family member peeks in the photo — big & inviting (gucha: use the screen). */
+  .peeker { position: absolute; transform: translate(-50%,-50%);
+    width: clamp(96px,26vw,150px); height: clamp(96px,26vw,150px);
+    display: grid; place-items: center; border-radius: 50%;
+    transition: transform .2s var(--ease), filter .25s, opacity .25s; z-index: 3; }
+  /* a soft warm disc so each face reads as a tappable spot, not a floating cut-out */
+  .peeker::before { content: ""; position: absolute; inset: 6% 6% 2% 6%; border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, rgba(255,240,176,.42), rgba(255,210,120,.14) 62%, transparent 74%);
+    z-index: -1; transition: opacity .3s; }
+  .peeker .p-emoji { font-size: clamp(56px,15vw,86px); filter: drop-shadow(0 6px 10px rgba(46,36,64,.4)); }
+  /* drop-in real art: PNG replaces the emoji placeholder (page-local wiring) */
+  .peeker.has-art { background-size: contain; background-repeat: no-repeat; background-position: center bottom;
+    filter: drop-shadow(0 8px 14px rgba(46,36,64,.45)); }
+  .peeker.has-art .p-emoji { display: none; }
+
+  /* gentle "alive in the photo" bob — on the inner glyph so the button transform stays
+     free for armed/beckon (no transform conflict). */
+  .peeker .p-emoji, .peeker.has-art { animation: pkBob var(--pk,3s) ease-in-out infinite; }
+  @keyframes pkBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+  .peeker.armed { transform: translate(-50%,-50%) scale(1.12); }
+  .peeker.armed::before { opacity: 1; }
+  .peeker.chosen { transform: translate(-50%,-50%) scale(1.08); }
+  .peeker.chosen::before { opacity: 1; background: radial-gradient(circle at 50% 40%, rgba(255,240,176,.85), rgba(255,207,92,.3) 60%, transparent 74%); }
+  .peeker.beckon { animation: pkBeckon 1s ease-in-out infinite; }
+  @keyframes pkBeckon { 0%,100%{ transform: translate(-50%,-50%) scale(1);} 50%{ transform: translate(-50%,-50%) scale(1.12);} }
+  /* wrong first tap → soft startle only (NO red, NO X, no fail sound — zero punishment). */
+  .peeker.startle-soft { animation: pkStartle .6s ease-in-out; }
+  @keyframes pkStartle { 0%,100%{ transform: translate(-50%,-50%);} 25%{ transform: translate(calc(-50% - 5px),-50%) rotate(-4deg);} 75%{ transform: translate(calc(-50% + 5px),-50%) rotate(4deg);} }
+  .peeker.faded { opacity: .16; }
+
+  /* soft motes: gentle warmth over the photo, not a quiz grid */
+  .hide-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background:
+      radial-gradient(2px 2px at 22% 22%, rgba(255,240,176,.7), transparent),
+      radial-gradient(2px 2px at 76% 18%, rgba(255,216,176,.6), transparent),
+      radial-gradient(2px 2px at 36% 82%, rgba(255,207,92,.6), transparent),
+      radial-gradient(2px 2px at 82% 72%, rgba(255,216,176,.5), transparent);
+    animation: motes 6s ease-in-out infinite alternate; }
+  @keyframes motes { from { transform: translateY(0); opacity:.35; } to { transform: translateY(-6px); opacity:.6; } }
+
+  /* ---- sparkle (LumiFx.sparkle) ---- */
+  .spark { position: fixed; width: 10px; height: 10px; border-radius: 50%; z-index: 50; pointer-events: none;
+    background: radial-gradient(circle, var(--lantern-glow), var(--gold)); transform: translate(-50%,-50%);
+    animation: sparkFly .72s ease-out forwards; }
+  @keyframes sparkFly { 0%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3)} }
+
+  /* ---- overlays (intro / done) — warm card DNA ---- */
+  .lg-overlay { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 18px; padding: 28px;
+    background: radial-gradient(circle at 50% 30%, rgba(46,36,64,.30), rgba(46,36,64,.64)); }
+  .lg-overlay.hidden { display: none; }
+  .lg-hero { width: clamp(150px, 42vw, 210px); aspect-ratio: 1; background: center/contain no-repeat;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.45)); animation: heroFloat 4s ease-in-out infinite; }
+  .lg-hero[data-mood="idle"] { background-image: url(assets/character/lumi/lumi-idle.png); }
+  .lg-hero[data-mood="celebrate"] { background-image: url(assets/character/lumi/lumi-celebrate.png); }
+  @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .lg-overlay h1 { margin: 0; font-size: clamp(24px, 6.5vw, 34px); font-weight: 900; color: var(--dusk-deep);
+    background: rgba(255,255,255,.95); padding: 10px 24px; border-radius: 20px; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+  .lg-overlay p { margin: 0; font-size: clamp(17px, 4.4vw, 21px); font-weight: 500; line-height: 1.55; color: var(--dusk-deep);
+    background: rgba(255,255,255,.9); padding: 14px 22px; border-radius: 18px; max-width: 460px; }
+  .lg-overlay p b { color: var(--coral-deep); font-weight: 800; }
+  .lg-btn-big { font-size: 21px; font-weight: 800; color: #fff; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, var(--coral), var(--coral-deep)); padding: 15px 42px; border-radius: 999px;
+    box-shadow: 0 10px 24px rgba(224,90,74,.5); min-height: 56px; transition: transform .15s ease; }
+  .lg-btn-big:active { transform: scale(.96); }
+  .lg-btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; cursor: pointer;
+    color: var(--dusk-deep); background: rgba(255,255,255,.85); border: 0; padding: 11px 26px; border-radius: 999px; min-height: 48px; }
+  .lg-btn-ghost:active { transform: scale(.96); }
+</style>
+</head>
+<body>
+  <main class="lg-stage">
+    <div class="lg-hud">
+      <div class="lg-prog" id="prog" aria-label="בני משפחה שנמצאו"></div>
+      <div class="lg-home" title="הבית של לומי">🏠</div>
+    </div>
+    <div class="lg-peek" id="peek" aria-label="למבוגרים"></div>
+    <div id="stage"></div>
+  </main>
+
+  <div class="lg-overlay" id="introOverlay">
+    <div class="lg-hero" data-mood="idle"></div>
+    <h1>תְּמוּנַת הַמִּשְׁפָּחָה 🖼️</h1>
+    <p>לוּמִי מַרְאֶה לָכֶם אֶת <b>הַמִּשְׁפָּחָה</b> שֶׁלּוֹ 💛<br>הַקְשִׁיבוּ לְמִי לוּמִי מְחַפֵּשׂ,<br>וְגַעוּ בּוֹ בַּתְּמוּנָה.</p>
+    <button class="lg-btn-ghost" id="introSpeaker">🔊 הַקְשִׁיבוּ לַהֶסְבֵּר</button>
+    <button class="lg-btn-big" id="startBtn">בּוֹאוּ נַתְחִיל ➜</button>
+  </div>
+
+  <div class="lg-overlay hidden" id="doneOverlay">
+    <div class="lg-hero" data-mood="celebrate"></div>
+    <h1>מְצָאתֶם אֶת כָּל הַמִּשְׁפָּחָה! 🎉</h1>
+    <p>לוּמִי אוֹהֵב אֶת כֻּלָּם — <b>וְגַם אֶתְכֶם</b>!</p>
+    <button class="lg-btn-big" id="againBtn">עוֹד פַּעַם ➜</button>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>\n  <script src="js/profile.js"></script>
+  <script src="js/lumi-character.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/mechanics/_measured-core.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/mechanics/scene-hide.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var q = location.search;
+    if (/[?&]frame=1/.test(q)) document.body.classList.add('frame');
+
+    var D = window.LUMI_DATA || { emoji: {}, reps: {} };
+    var WORDS = ['mum', 'dad', 'baby', 'brother', 'sister', 'grandma', 'grandpa'];   // T12 · Family
+    // scene-hide asks a whole CHUNK (comprehension), not a bare word.
+    var WHERE = {
+      mum: 'Where is my mum?', dad: 'Where is my dad?', baby: 'Where is the baby?',
+      brother: 'Where is my brother?', sister: 'Where is my sister?',
+      grandma: 'Where is my grandma?', grandpa: 'Where is my grandpa?',
+    };
+    // warm "This is my ___" naming spoken when the family member is found.
+    var THIS = {
+      mum: 'This is my mum!', dad: 'This is my dad!', baby: 'This is the baby!',
+      brother: 'This is my brother!', sister: 'This is my sister!',
+      grandma: 'This is my grandma!', grandpa: 'This is my grandpa!',
+    };
+    // primary visual near-pair — kept OUT of the playable "find" distractors (the tough
+    // pair lives in the discriminate bank, not this comprehension loop).
+    var CONFUSE = { mum: 'grandma', grandma: 'mum', dad: 'brother', brother: 'dad', baby: 'sister', sister: 'baby', grandpa: 'grandma' };
+
+    var stageEl = document.getElementById('stage');
+    var progEl = document.getElementById('prog');
+    var peekEl = document.getElementById('peek');
+
+    function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+    // warm progress rail — one glow per family member found
+    var pips = WORDS.map(function () { var p = document.createElement('span'); p.className = 'lg-pip'; progEl.appendChild(p); return p; });
+    function lightPips(n) { pips.forEach(function (p, i) { p.classList.toggle('lit', i < n); }); }
+
+    // grown-ups strip (?peek=1): transparent chips, lit as each member is found this session
+    var found = {};
+    if (/[?&]peek=1/.test(q)) document.body.classList.add('peeking');
+    var pkEls = {};
+    WORDS.forEach(function (w) {
+      var el = document.createElement('span'); el.className = 'pk';
+      el.innerHTML = '<span class="dot"></span><span>' + ((D.emoji && D.emoji[w]) || '❔') + '</span>';
+      peekEl.appendChild(el); pkEls[w] = el;
+    });
+    function markFound(w) { found[w] = true; if (pkEls[w]) pkEls[w].classList.add('on'); }
+
+    // recorded-audio unlock (autoplay policy) — touch every clip once on first gesture
+    function unlockAudio() {
+      Object.keys(LumiAudio.clipMap).forEach(function (k) {
+        try { var a = new Audio(LumiAudio.clipMap[k]); a.preload = 'auto'; var pr = a.play(); if (pr) pr.then(function () { a.pause(); a.currentTime = 0; }).catch(function () {}); } catch (e) {}
+      });
+    }
+
+    // an item for `word`: correct = that member; 2 distractors = OTHER family, EXCLUDING the
+    // confusable partner (the find loop stays "distinct"; near-pairs live in discriminate).
+    function makeItem(word) {
+      var pool = WORDS.filter(function (w) { return w !== word && w !== CONFUSE[word]; });
+      var others = shuffle(pool).slice(0, (window.LumiProfile ? LumiProfile.distractors() : 2));
+      var opts = shuffle([{ img: word, correct: true }].concat(others.map(function (o) { return { img: o, correct: false }; })));
+      return { prompt: { audio_en: WHERE[word] }, options: opts, help_he: 'לוּמִי מְחַפֵּשׂ מִישֶׁהוּ מֵהַמִּשְׁפָּחָה', target: [word] };
+    }
+
+    // page-local wiring: drop the real family PNG into every peeker (correct + distractors).
+    // Falls back silently to the emoji placeholder if a file is absent.
+    function paintFamily(root, item) {
+      var peekers = root.querySelectorAll('.peeker');
+      item.options.forEach(function (o, i) {
+        var b = peekers[i]; if (!b) return;
+        var img = new Image();
+        img.onload = function () { b.classList.add('has-art'); b.style.backgroundImage = 'url(' + img.src + ')'; };
+        img.src = 'assets/family/' + o.img + '.png';
+      });
+    }
+
+    var order = shuffle(WORDS), idx = 0, lit = 0, autoplay = /[?&]autoplay=1/.test(q);
+    if (autoplay) window.LUMI_AUTOPLAY = true;
+
+    function nextRound() {
+      if (idx >= order.length) return showDone();
+      var word = order[idx++];
+      var item = makeItem(word);
+      stageEl.innerHTML = '';
+      LumiSceneHide.present(stageEl, {
+        item: item, emoji: D.emoji, lumi: null,
+        targetRep: { glyph: (D.emoji && D.emoji[word]) || '❔' },
+        instructionHe: idx === 1 ? 'הַקְשִׁיבוּ וּמִצְאוּ' : null, showInstruction: idx === 1,
+        onMeasured: function () {},
+        onDone: function () {
+          markFound(word); lit++; lightPips(lit);
+          // Lumi names the found member with the recorded "This is my ___" chunk (accent-clean).
+          try { LumiAudio.english(THIS[word]); } catch (e) {}
+          setTimeout(nextRound, 1200);
+        },
+      });
+      paintFamily(stageEl, item);
+    }
+
+    function sayHe(clipFile, fallbackText) {
+      try {
+        var src = 'assets/audio/words/' + clipFile;
+        var a = new Audio(src);
+        a.onerror = function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} };
+        a.play().catch(function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} });
+      } catch (e) { try { LumiAudio.hebrew(fallbackText); } catch (e2) {} }
+    }
+
+    function showDone() {
+      document.getElementById('doneOverlay').classList.remove('hidden');
+      // Lumi's signature warm chunk, then the Hebrew closing line.
+      try { LumiAudio.english('I love you!'); } catch (e) {}
+      setTimeout(function () { sayHe('family-done-he.mp3', 'מצאתם את כל המשפחה של לומי! כל הכבוד.'); }, 1200);
+    }
+
+    document.getElementById('introSpeaker').addEventListener('click', function () {
+      unlockAudio();
+      sayHe('family-intro-he.mp3', 'זאת המשפחה של לומי. הקשיבו למי לומי מחפש, וגעו בו בתמונה.');
+    });
+    document.getElementById('startBtn').addEventListener('click', function () {
+      unlockAudio();
+      document.getElementById('introOverlay').classList.add('hidden');
+      lightPips(0); nextRound();
+    });
+    document.getElementById('againBtn').addEventListener('click', function () {
+      order = shuffle(WORDS); idx = 0; lit = 0; found = {}; lightPips(0);
+      WORDS.forEach(function (w) { if (pkEls[w]) pkEls[w].classList.remove('on'); });
+      document.getElementById('doneOverlay').classList.add('hidden'); nextRound();
+    });
+
+    // QA: ?autoplay=1 — skip the intro and drive automatically (autoplay hides the button path).
+    if (autoplay) { document.getElementById('introOverlay').classList.add('hidden'); nextRound(); }
+  })();
+  </script>
+</body>
+</html>

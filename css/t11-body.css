@@ -1,0 +1,285 @@
+/* ============================================================
+   t11-body.css — 🙌 Touch & Go (T11 · Body). MEASURED mechanic = path-choice.
+   Lantern-grove DNA (mint / aqua / warm-glow over the grove twilight), warm dusk.
+   Quality bar = lantern-grove.html; path-choice chrome shape shared with farm-path.
+   Skin only — the state machine lives in _measured-core.js + path-choice.js (LOCKED).
+   Body-part cards are emoji placeholders until ART-BRIEF-t11-body.md crops land;
+   the fork guide is the full-body Lumi (the star of a body game).
+   ============================================================ */
+
+:root {
+  --tb-spring: cubic-bezier(.2, .82, .26, 1.18);
+  --tb-settle: cubic-bezier(.22, .78, .24, 1);
+  --tb-shadow: rgba(28, 51, 60, .36);
+  --tb-mint: #6fd6c4;
+  --tb-aqua: #7fd3e6;
+}
+
+/* ---- twilight grove behind the trails (mint/aqua glow, warm dusk wash) ---- */
+.tb-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background:
+    url(../assets/worlds/lantern-grove/backgrounds/grove-bg.png) center bottom / cover no-repeat,
+    radial-gradient(130% 86% at 50% 112%, #35635b 0%, #295159 30%, #244a52 58%, #1e343d 100%);
+}
+.tb-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(30, 52, 61, .34) 0%, rgba(30, 52, 61, .06) 34%, transparent 60%);
+}
+
+.tb-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   MEASURED-MECHANIC CHROME — central target button replays the WORD;
+   options never speak while measured (contract in _measured-core.js).
+   ============================================================ */
+.measure {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.measure-top {
+  position: relative;
+  z-index: 8;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 82px;
+  padding-top: 4px;
+}
+
+.measure-instr {
+  color: var(--peach-soft, #ffe6cf);
+  font-size: clamp(16px, 4.5vw, 19px);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 2px 10px var(--tb-shadow);
+}
+
+/* the replay affordance: a warm lantern-glass "listen" button */
+.target-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, .6);
+  border-radius: 50%;
+  outline: 0;
+  color: var(--dusk-deep, #22333f);
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, .96) 0 10%, transparent 32%),
+    linear-gradient(150deg, var(--gold, #ffcf5c), var(--amber, #ffb347));
+  box-shadow:
+    0 10px 24px rgba(28, 51, 60, .34),
+    0 0 0 5px rgba(255, 210, 120, .16),
+    inset 0 2px 4px rgba(255, 255, 255, .8);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .2s var(--tb-spring), box-shadow .25s ease, filter .25s ease;
+}
+.target-btn:hover { filter: brightness(1.05); transform: translateY(-2px); }
+.target-btn:active { transform: translateY(1px) scale(.95); }
+.target-btn:focus-visible { box-shadow: 0 0 0 4px var(--sage, #8fb89a), 0 8px 24px var(--tb-shadow); }
+.target-ic { font-size: 34px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(28, 51, 60, .3)); }
+.target-wave {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid var(--lantern-glow, #fff0b0);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.target-btn.pinging .target-wave { animation: tb-listen-wave .72s ease-out; }
+
+.measure-scene {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================================
+   PATH-CHOICE — trails fork away; the child leads Lumi to the body-part
+   he HEARD. The choice is a DIRECTION (spatial), not a card tap.
+   ============================================================ */
+.paths {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(10px, 5vw, 30px);
+  padding: 6px 8px 96px;   /* room at the bottom for full-body Lumi at the fork */
+}
+
+/* full-body Lumi at the fork — the guide (the star of a body game; big & inviting) */
+.paths .fork {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+.fork-lumi {
+  display: block;
+  width: clamp(92px, 24vw, 132px);
+  aspect-ratio: 0.66;
+  font-size: 0;
+  color: transparent;
+  background: center bottom / contain no-repeat url(../assets/character/lumi/lumi-body.png);
+  filter: drop-shadow(0 12px 14px rgba(28, 51, 60, .44));
+  animation: tb-lumi-breathe 3.8s ease-in-out infinite;
+}
+
+.trail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;   /* body-part (order 1) sits at the far end = top */
+  height: 100%;
+  transition: opacity .4s ease;
+}
+.trail-animal { order: 1; }
+.trail-line {
+  order: 2;
+  width: 6px;
+  flex: 1;
+  min-height: 34px;
+  margin-top: 10px;
+  border-radius: 6px;
+  opacity: .5;
+  background: repeating-linear-gradient(180deg, var(--lantern-glow, #fff0b0) 0 7px, transparent 7px 17px);
+  transition: opacity .4s ease;
+}
+.trail-animal {
+  display: grid;
+  place-items: center;
+  width: clamp(84px, 22vw, 116px);
+  height: clamp(84px, 22vw, 116px);
+  min-width: 56px;
+  min-height: 56px;
+  border: 3px solid var(--card-edge, rgba(255, 255, 255, .7));
+  border-radius: 26px;
+  background: var(--card, #fff8ee);
+  box-shadow: var(--shadow-card, 0 10px 26px rgba(28, 51, 60, .3));
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .18s var(--tb-spring), border-color .2s ease, box-shadow .3s ease;
+}
+.trail-animal:active { transform: scale(.95); }
+.trail-animal:focus-visible { outline: 0; border-color: var(--sage, #8fb89a); box-shadow: 0 0 0 4px rgba(143, 184, 154, .5); }
+.ta-emoji {
+  font-size: clamp(46px, 12vw, 64px);
+  line-height: 1;
+  filter: drop-shadow(0 3px 4px rgba(28, 51, 60, .22));
+}
+/* real body-part crops drop in here when ART-BRIEF-t11-body.md art lands
+   (soft-3D Lumi crops); emoji placeholder until then. */
+.trail-animal[data-part="head"] .ta-emoji,
+.trail-animal[data-part="hair"] .ta-emoji,
+.trail-animal[data-part="hands"] .ta-emoji,
+.trail-animal[data-part="feet"] .ta-emoji {
+  /* when a matching PNG exists, swap here:
+     display:block; width:clamp(64px,16vw,92px); height:...; font-size:0;
+     background:center/contain no-repeat url(../assets/body/<part>.png); */
+}
+
+/* states (owned by path-choice.js) */
+.trail-animal.armed {
+  transform: translateY(-6px) scale(1.05);
+  border-color: var(--gold, #ffcf5c);
+  box-shadow: 0 0 22px 5px rgba(255, 210, 120, .5);
+}
+.trail-animal.soft { border-color: var(--peach, #ffcaa3); }        /* gentle — never red */
+.trail.chosen .trail-line { opacity: 1; }
+.trail.chosen .trail-animal { border-color: var(--sage, #8fb89a); background: #f2fbf7; transform: translateY(-8px) scale(1.06); }
+.paths.leading .trail:not(.chosen) { opacity: .45; }
+.trail.beckon .trail-animal { border-color: var(--gold, #ffcf5c); animation: tb-beckon 1s ease-in-out infinite; }
+.trail.faded { opacity: .3; filter: grayscale(.6); pointer-events: none; }
+
+/* success motes (LumiFx.sparkle, engine.js) */
+.spark {
+  position: fixed;
+  z-index: 80;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--lantern-glow, #fff0b0), var(--gold, #ffcf5c));
+  box-shadow: 0 0 7px 2px rgba(255, 210, 120, .7);
+  transform: translate(-50%, -50%);
+  animation: tb-spark-flight .72s ease-out forwards;
+}
+.spark:nth-of-type(3n) { width: 6px; height: 6px; background: radial-gradient(circle, #fff, var(--tb-mint)); }
+
+/* help fab — a soft SOS bubble */
+.help-fab {
+  position: absolute;
+  inset-inline-end: 4px;
+  bottom: 4px;
+  z-index: 9;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 50%;
+  color: var(--dusk-deep, #22333f);
+  background: rgba(255, 246, 236, .94);
+  box-shadow: 0 8px 20px var(--tb-shadow), inset 0 1px 2px #fff;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* ---- keyframes ---- */
+@keyframes tb-listen-wave { 0% { opacity: .8; transform: scale(.78); } 100% { opacity: 0; transform: scale(1.42); } }
+@keyframes tb-lumi-breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.03); } }
+@keyframes tb-beckon { 0%, 100% { transform: translateY(-4px) scale(1.02); } 50% { transform: translateY(-10px) scale(1.09); } }
+@keyframes tb-spark-flight { to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.2); } }
+
+/* ---- responsive ---- */
+@media (max-width: 400px) {
+  .measure-top { min-height: 74px; }
+  .target-btn { width: 60px; height: 60px; }
+  .fork-lumi { width: clamp(84px, 26vw, 120px); }
+}
+@media (max-width: 370px), (max-height: 720px) {
+  .measure-top { min-height: 66px; gap: 4px; }
+  .measure-instr { font-size: 15px; }
+  .target-btn { width: 58px; height: 58px; }
+}
+@media (min-width: 700px) {
+  .trail-animal { width: 128px; height: 128px; }
+  .fork-lumi { width: 148px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .target-btn, .trail-animal, .trail-line, .trail { transition-duration: .12s; transition-timing-function: linear; }
+  .target-btn.pinging .target-wave, .fork-lumi, .trail.beckon .trail-animal, .spark { animation: none; }
+  .trail-animal.armed, .trail.chosen .trail-animal { transform: none; }
+  .spark { opacity: 0; }
+}

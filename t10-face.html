@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#22333f">
+<title>Lumi · הָאִירוּ אֶת הַפָּנִים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: Heebo, system-ui, sans-serif;
+    /* warm dusk DNA around a teal-glow "face" stage (Lumi's mint/aqua + warm lantern glow) */
+    background:
+      linear-gradient(180deg, rgba(46,36,64,.54) 0%, rgba(46,36,64,.20) 40%, rgba(46,36,64,.62) 100%),
+      center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png) fixed,
+      linear-gradient(180deg, #2b4a54 0%, #24404a 54%, #1e343d 100%) fixed;
+    color: #fff6ec; display: flex; flex-direction: column;
+  }
+  /* ?frame=1 — deterministic 390×844 device box for screenshots */
+  body.frame { width: 390px; height: 844px; margin: 24px auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  html:has(body.frame) { height: auto; background: #111; overflow: auto; }
+
+  /* wrapper must fill the viewport so the flex chain (#stage → .measure-scene) has height
+     (gucha: without a sized .lg-stage the flex chain collapses to 0 and the stage looks empty) */
+  .lg-stage { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+
+  /* ---- HUD: warm progress rail (one glow per face-part found) ---- */
+  .lg-hud { position: absolute; top: 0; inset-inline: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .lg-prog { display: flex; gap: 7px; background: rgba(30,52,61,.42); padding: 8px 14px; border-radius: 999px;
+    backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .lg-pip { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.20);
+    position: relative; transition: background .4s ease, box-shadow .4s ease; }
+  .lg-pip.lit { background: var(--lantern-glow, #fff0b0); box-shadow: 0 0 12px 3px rgba(255,240,176,.8); }
+  .lg-home { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); opacity: .9; }
+
+  /* ---- grown-ups strip (?peek=1) — transparent evidence, never a % ---- */
+  .lg-peek { position: absolute; top: 52px; inset-inline: 0; z-index: 35; display: none;
+    justify-content: center; gap: 10px; padding: 4px 10px; }
+  body.peeking .lg-peek { display: flex; }
+  .lg-peek .pk { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+    color: #fff6ec; background: rgba(30,52,61,.5); padding: 4px 10px; border-radius: 999px; }
+  .lg-peek .pk .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.25); }
+  .lg-peek .pk.on .dot { background: var(--lantern-glow); box-shadow: 0 0 8px 2px rgba(255,240,176,.8); }
+
+  /* ---- game stage (mechanic mounts here) ---- */
+  #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 52px 14px 16px; }
+
+  /* ============================================================
+     MEASURED-MECHANIC CHROME (shared contract — target button replays the WORD;
+     options never speak during measurement; first tap SELECTS).
+     ============================================================ */
+  .measure { position: relative; flex: 1; width: 100%; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .measure-top { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; }
+  .measure-instr { font-size: 16px; font-weight: 700; color: #fff6ec; text-shadow: 0 1px 4px rgba(20,30,26,.6); }
+  .target-btn { position: relative; min-width: 128px; height: 74px; padding: 0 28px; border-radius: 999px;
+    background: linear-gradient(160deg, var(--gold), var(--amber)); box-shadow: var(--shadow-card);
+    display: grid; place-items: center; color: var(--dusk-deep); }
+  .target-ic { font-size: 38px; position: relative; z-index: 2; }
+  .target-btn:active { transform: scale(.94); }
+  .target-btn::after { content: ""; position: absolute; inset: -6px; border-radius: 999px;
+    border: 3px solid var(--lantern-glow); opacity: 0; }
+  .target-btn.pinging::after { animation: tping .75s ease-out; }
+  @keyframes tping { 0%{opacity:.85; transform:scale(1)} 100%{opacity:0; transform:scale(1.4)} }
+  .measure-scene { position: relative; flex: 1; min-height: 0; }
+  .help-fab { position: absolute; bottom: 12px; inset-inline-end: 12px; z-index: 8; width: 56px; height: 56px;
+    border-radius: 50%; font-size: 26px; background: var(--card); color: var(--dusk-deep); box-shadow: var(--shadow-card); }
+  .help-fab:active { transform: scale(.94); }
+
+  /* ---- light-beam scene: Lumi's face resting in the dark; sweep the beam to reveal a part ---- */
+  .beam-scene { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; touch-action: none;
+    background:
+      radial-gradient(130% 100% at 50% 122%, #35635b 0%, #244a52 56%, #1c333c 100%); }
+  /* dim Lumi-face portrait behind the hotspots (page-local; NOT the shared mechanic).
+     Cropped to the head via background zoom; the beam lights it as parts are found. */
+  .face-portrait { position: absolute; inset: 0; pointer-events: none;
+    background: url(assets/face/lumi-face.png) no-repeat center 22% / contain;
+    opacity: .5; filter: brightness(.72) saturate(.9); transition: opacity .3s; }
+  .beam-scene.lit .face-portrait { opacity: .82; filter: brightness(.95) saturate(1); }
+  .beam { position: absolute; width: 210px; height: 210px; transform: translate(-50%,-50%); pointer-events: none;
+    border-radius: 50%; mix-blend-mode: screen; z-index: 2;
+    background: radial-gradient(circle, rgba(255,236,176,.62), rgba(255,236,176,.16) 46%, transparent 70%); }
+  .beam-animal { position: absolute; transform: translate(50%,-50%); width: clamp(72px,18vw,98px); height: clamp(72px,18vw,98px);
+    border-radius: 50%; display: grid; place-items: center; font-size: clamp(44px,12vw,66px); z-index: 3;
+    opacity: .3; filter: grayscale(.7) brightness(.55); transition: opacity .25s, filter .25s, transform .2s; }
+  .beam-animal.found { opacity: 1; filter: none; }
+  .beam-animal.armed { transform: translate(50%,-50%) scale(1.14); }
+  .beam-animal.chosen { opacity: 1; filter: none; }
+  .beam-animal.soft { filter: none; opacity: 1; }
+  .beam-animal.beckon { animation: beckon 1s ease-in-out infinite; }
+  .beam-animal.faded { opacity: .1; }
+  @keyframes beckon { 0%,100%{ transform: translate(50%,-50%) scale(1);} 50%{ transform: translate(50%,-50%) scale(1.12);} }
+
+  /* ---- page-local: reposition the hotspots to anatomical spots on Lumi's face ----
+     (light-beam.js positions options by its SPOTS array; we override to a face map.
+      centered on the point, so transform must be translate(-50%,-50%), not the mechanic's 50%.) */
+  .face-hotspot { transform: translate(-50%,-50%); }
+  .face-hotspot.armed { transform: translate(-50%,-50%) scale(1.14); }
+  .face-hotspot.beckon { animation: beckonC 1s ease-in-out infinite; }
+  @keyframes beckonC { 0%,100%{ transform: translate(-50%,-50%) scale(1);} 50%{ transform: translate(-50%,-50%) scale(1.12);} }
+  /* a soft glowing ring so each part reads as a tappable hotspot, not a floating emoji */
+  .face-hotspot::before { content: ""; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid rgba(255,240,176,.28); box-shadow: 0 0 0 rgba(255,240,176,0); transition: box-shadow .25s, border-color .25s; }
+  .face-hotspot.found::before, .face-hotspot.chosen::before { border-color: rgba(255,240,176,.7);
+    box-shadow: 0 0 18px 4px rgba(255,240,176,.45); }
+
+  /* soft motes: gentle drift so the dark field feels warm & alive, not a quiz grid */
+  .beam-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background:
+      radial-gradient(2px 2px at 22% 24%, rgba(255,207,92,.7), transparent),
+      radial-gradient(2px 2px at 74% 18%, rgba(255,216,176,.6), transparent),
+      radial-gradient(2px 2px at 34% 80%, rgba(255,207,92,.6), transparent),
+      radial-gradient(2px 2px at 84% 70%, rgba(255,216,176,.5), transparent);
+    animation: motes 6s ease-in-out infinite alternate; }
+  @keyframes motes { from { transform: translateY(0); opacity:.35; } to { transform: translateY(-6px); opacity:.6; } }
+
+  /* ---- sparkle (LumiFx.sparkle) ---- */
+  .spark { position: fixed; width: 10px; height: 10px; border-radius: 50%; z-index: 50; pointer-events: none;
+    background: radial-gradient(circle, var(--lantern-glow), var(--gold)); transform: translate(-50%,-50%);
+    animation: sparkFly .72s ease-out forwards; }
+  @keyframes sparkFly { 0%{opacity:1; transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3)} }
+
+  /* ---- overlays (intro / done) — warm card DNA ---- */
+  .lg-overlay { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 18px; padding: 28px;
+    background: radial-gradient(circle at 50% 30%, rgba(46,36,64,.30), rgba(28,51,60,.64)); }
+  .lg-overlay.hidden { display: none; }
+  .lg-hero { width: clamp(150px, 42vw, 210px); aspect-ratio: 1; background: center/contain no-repeat;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.45)); animation: heroFloat 4s ease-in-out infinite; }
+  .lg-hero[data-mood="idle"] { background-image: url(assets/character/lumi/lumi-idle.png); }
+  .lg-hero[data-mood="celebrate"] { background-image: url(assets/character/lumi/lumi-celebrate.png); }
+  @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .lg-overlay h1 { margin: 0; font-size: clamp(24px, 6.5vw, 34px); font-weight: 900; color: var(--dusk-deep);
+    background: rgba(255,255,255,.95); padding: 10px 24px; border-radius: 20px; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+  .lg-overlay p { margin: 0; font-size: clamp(17px, 4.4vw, 21px); font-weight: 500; line-height: 1.55; color: var(--dusk-deep);
+    background: rgba(255,255,255,.9); padding: 14px 22px; border-radius: 18px; max-width: 460px; }
+  .lg-overlay p b { color: var(--coral-deep); font-weight: 800; }
+  .lg-btn-big { font-size: 21px; font-weight: 800; color: #fff; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, var(--coral), var(--coral-deep)); padding: 15px 42px; border-radius: 999px;
+    box-shadow: 0 10px 24px rgba(224,90,74,.5); min-height: 56px; transition: transform .15s ease; }
+  .lg-btn-big:active { transform: scale(.96); }
+  .lg-btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; cursor: pointer;
+    color: var(--dusk-deep); background: rgba(255,255,255,.85); border: 0; padding: 11px 26px; border-radius: 999px; min-height: 48px; }
+  .lg-btn-ghost:active { transform: scale(.96); }
+</style>
+</head>
+<body>
+  <main class="lg-stage">
+    <div class="lg-hud">
+      <div class="lg-prog" id="prog" aria-label="חלקי פנים שהתגלו"></div>
+      <div class="lg-home" title="הבית של לומי">🏠</div>
+    </div>
+    <div class="lg-peek" id="peek" aria-label="למבוגרים"></div>
+    <div id="stage"></div>
+  </main>
+
+  <div class="lg-overlay" id="introOverlay">
+    <div class="lg-hero" data-mood="idle"></div>
+    <h1>הָאִירוּ אֶת הַפָּנִים 👀</h1>
+    <p>הַפָּנִים שֶׁל לוּמִי בַּחֹשֶׁךְ 🌙<br>הַזִּיזוּ אֶת <b>אֲלֻמַּת הָאוֹר</b> וְגַלּוּ אֵיזֶה חֵלֶק מִסְתַּתֵּר.<br>הַקְשִׁיבוּ לַמִּלָּה וְהָאִירוּ עַל הַחֵלֶק הַנָּכוֹן בַּפָּנִים.</p>
+    <button class="lg-btn-ghost" id="introSpeaker">🔊 הַקְשִׁיבוּ לַהֶסְבֵּר</button>
+    <button class="lg-btn-big" id="startBtn">בּוֹאוּ נַתְחִיל ➜</button>
+  </div>
+
+  <div class="lg-overlay hidden" id="doneOverlay">
+    <div class="lg-hero" data-mood="celebrate"></div>
+    <h1>הֶאַרְתֶּם אֶת כָּל הַפָּנִים! 🎉</h1>
+    <p>עֵינַיִם, אַף, פֶּה וְאָזְנַיִם — מָצָאתֶם הַכֹּל!</p>
+    <button class="lg-btn-big" id="againBtn">עוֹד פַּעַם ➜</button>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>\n  <script src="js/profile.js"></script>
+  <script src="js/lumi-character.js"></script>
+  <script src="js/mechanics/_measured-core.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/mechanics/light-beam.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var q = location.search;
+    if (/[?&]frame=1/.test(q)) document.body.classList.add('frame');
+
+    var D = window.LUMI_DATA || { emoji: {}, reps: {} };
+    // page-local glyph override: the bare 👂 for "ears" is identical to the target
+    // button's 👂 "listen" icon (locked in _measured-core) → confusing. Use 🦻 (a distinct
+    // ear silhouette) here only, until the real face-portrait art lands. Never mutate the
+    // shared global D.emoji / _emoji.json.
+    var EMOJI = Object.assign({}, D.emoji, { ears: '🦻' });
+    var WORDS = ['eyes', 'nose', 'mouth', 'ears'];   // T10 · Face
+    // confusable partner (kept OUT of recognize distractors → the tough pair lives in
+    // the discriminate bank, not this playable recognize loop).
+    var CONFUSE = { eyes: 'ears', ears: 'eyes', nose: 'mouth', mouth: 'nose' };
+    // "This is my ___" / "These are my ___" — Lumi names the found part (grammar-correct plural).
+    var CHUNK = { eyes: 'These are my eyes!', nose: 'This is my nose!', mouth: 'This is my mouth!', ears: 'These are my ears!' };
+    // anatomical hotspot positions on Lumi's face (% of the scene) — spread enough to stay
+    // tappable (≥56px targets), roughly matching the dim face portrait behind them.
+    var FACEMAP = { eyes: { x: 50, y: 40 }, ears: { x: 17, y: 46 }, nose: { x: 50, y: 51 }, mouth: { x: 50, y: 61 } };
+
+    // emoji → word (to identify each rendered hotspot in DOM/options order)
+    var glyphWord = {};
+    WORDS.forEach(function (w) { var g = EMOJI[w]; if (g) glyphWord[g] = w; });
+
+    var stageEl = document.getElementById('stage');
+    var progEl = document.getElementById('prog');
+    var peekEl = document.getElementById('peek');
+
+    function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+    // warm progress rail — one glow per face-part revealed
+    var pips = WORDS.map(function () { var p = document.createElement('span'); p.className = 'lg-pip'; progEl.appendChild(p); return p; });
+    function lightPips(n) { pips.forEach(function (p, i) { p.classList.toggle('lit', i < n); }); }
+
+    // grown-ups strip (?peek=1): transparent chips, lit as each word is found this session
+    var found = {};
+    if (/[?&]peek=1/.test(q)) document.body.classList.add('peeking');
+    var pkEls = {};
+    WORDS.forEach(function (w) {
+      var el = document.createElement('span'); el.className = 'pk';
+      el.innerHTML = '<span class="dot"></span><span>' + (EMOJI[w] || '❔') + '</span>';
+      peekEl.appendChild(el); pkEls[w] = el;
+    });
+    function markFound(w) { found[w] = true; if (pkEls[w]) pkEls[w].classList.add('on'); }
+
+    // recorded-audio unlock (autoplay policy) — touch every clip once on first gesture
+    function unlockAudio() {
+      Object.keys(LumiAudio.clipMap).forEach(function (k) {
+        try { var a = new Audio(LumiAudio.clipMap[k]); a.preload = 'auto'; var pr = a.play(); if (pr) pr.then(function () { a.pause(); a.currentTime = 0; }).catch(function () {}); } catch (e) {}
+      });
+    }
+
+    // an item for `word`: correct = that part; 2 distractors = OTHER parts, EXCLUDING the
+    // confusable partner (recognize stays "distinct"; eyes↔ears / nose↔mouth live in discriminate).
+    function makeItem(word) {
+      var pool = WORDS.filter(function (w) { return w !== word && w !== CONFUSE[word]; });
+      var others = shuffle(pool).slice(0, (window.LumiProfile ? LumiProfile.distractors() : 2));
+      var opts = shuffle([{ img: word, correct: true }].concat(others.map(function (o) { return { img: o, correct: false }; })));
+      return { prompt: { audio_en: word }, options: opts, help_he: 'לוּמִי מְחַפֵּשׂ אֶת הַחֵלֶק בַּפָּנִים', target: [word] };
+    }
+
+    // reposition the mechanic's hotspots onto Lumi's face + tag them as face-hotspots.
+    function placeHotspots(root) {
+      var btns = root.querySelectorAll('.beam-animal');
+      Array.prototype.forEach.call(btns, function (btn) {
+        var span = btn.querySelector('.ba-emoji');
+        var w = span && glyphWord[span.textContent.trim()];
+        if (!w || !FACEMAP[w]) return;                // unknown glyph → leave mechanic's default
+        var p = FACEMAP[w];
+        btn.classList.add('face-hotspot');
+        btn.style.insetInlineStart = 'auto';
+        btn.style.right = 'auto';
+        btn.style.left = p.x + '%';
+        btn.style.top = p.y + '%';
+        btn.setAttribute('aria-label', 'חלק בפנים');
+      });
+    }
+
+    var order = shuffle(WORDS), idx = 0, lit = 0, autoplay = /[?&]autoplay=1/.test(q);
+    if (autoplay) window.LUMI_AUTOPLAY = true;
+
+    function nextRound() {
+      if (idx >= order.length) return showDone();
+      var word = order[idx++];
+      stageEl.innerHTML = '';
+      LumiLightBeam.present(stageEl, {
+        item: makeItem(word), emoji: EMOJI, lumi: null,
+        targetRep: { glyph: EMOJI[word] || '❔' },
+        instructionHe: idx === 1 ? 'הַקְשִׁיבוּ וְהָאִירוּ' : null, showInstruction: idx === 1,
+        onMeasured: function () {},
+        onDone: function () {
+          markFound(word); lit++; lightPips(lit);
+          var scene = stageEl.querySelector('.beam-scene'); if (scene) scene.classList.add('lit');
+          // Lumi names the found part with the recorded "This is my ___" chunk (accent-clean).
+          try { LumiAudio.english(CHUNK[word]); } catch (e) {}
+          setTimeout(nextRound, 1100);
+        },
+      });
+      // page-local wiring: dim Lumi-face portrait behind the hotspots, then place the hotspots.
+      var scene = stageEl.querySelector('.beam-scene');
+      if (scene && !scene.querySelector('.face-portrait')) {
+        var portrait = document.createElement('div'); portrait.className = 'face-portrait';
+        scene.insertBefore(portrait, scene.firstChild);
+      }
+      placeHotspots(stageEl);
+    }
+
+    function sayHe(clipFile, fallbackText) {
+      try {
+        var src = 'assets/audio/words/' + clipFile;
+        var a = new Audio(src);
+        a.onerror = function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} };
+        a.play().catch(function () { try { LumiAudio.hebrew(fallbackText); } catch (e) {} });
+      } catch (e) { try { LumiAudio.hebrew(fallbackText); } catch (e2) {} }
+    }
+
+    function showDone() {
+      document.getElementById('doneOverlay').classList.remove('hidden');
+      sayHe('face-done-he.mp3', 'הארתם את כל הפנים! עיניים, אף, פה ואוזניים. כל הכבוד.');
+    }
+
+    document.getElementById('introSpeaker').addEventListener('click', function () {
+      unlockAudio();
+      sayHe('face-intro-he.mp3', 'הפנים של לומי בחושך. הזיזו את אלומת האור וגלו איזה חלק מסתתר. הקשיבו למילה באנגלית, והאירו על החלק הנכון בפנים.');
+    });
+    document.getElementById('startBtn').addEventListener('click', function () {
+      unlockAudio();
+      document.getElementById('introOverlay').classList.add('hidden');
+      lightPips(0); nextRound();
+    });
+    document.getElementById('againBtn').addEventListener('click', function () {
+      order = shuffle(WORDS); idx = 0; lit = 0; found = {}; lightPips(0);
+      WORDS.forEach(function (w) { if (pkEls[w]) pkEls[w].classList.remove('on'); });
+      document.getElementById('doneOverlay').classList.add('hidden'); nextRound();
+    });
+
+    // QA: ?autoplay=1 — skip the intro and drive automatically (autoplay hides the button path).
+    if (autoplay) { document.getElementById('introOverlay').classList.add('hidden'); nextRound(); }
+  })();
+  </script>
+</body>
+</html>

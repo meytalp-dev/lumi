@@ -1,0 +1,93 @@
+/* ============================================================
+   Lumi · tokens.css — the WARM SUNSET DNA (locked, brief §5)
+   Palette: peach / gold / amber / coral / sage / dusk.
+   NOT underwater, NOT blue-tech. Own tokens — never Avnei-Yesod's.
+   Metaphor: journey home; every learned word lights a lantern.
+   ============================================================ */
+
+:root {
+  /* --- sunset palette --- */
+  --peach:      #ffd8b0;
+  --peach-soft: #ffe8d2;
+  --gold:       #ffc35c;
+  --amber:      #f5972b;
+  --coral:      #f4785f;
+  --coral-deep: #e05a4a;
+  --sage:       #8fb89a;
+  --sage-deep:  #5e8f72;
+  --dusk:       #4a3a5c;
+  --dusk-deep:  #2e2440;
+  --dusk-soft:  #6b5680;
+
+  /* --- sky gradient (dusk sky over a warm horizon) --- */
+  --sky-top:    #3a2c50;
+  --sky-mid:    #8a5a7a;
+  --sky-low:    #f0955a;
+  --sky-glow:   #ffd98a;
+
+  /* --- surfaces --- */
+  --card:        #fff6ec;
+  --card-edge:   #ffe3c4;
+  --ink:         #3a2b2b;      /* warm near-black for Hebrew UI text */
+  --ink-soft:    #7a6a68;
+  --panel:       rgba(255, 246, 236, 0.92);
+
+  /* --- lantern states --- */
+  --lantern-off:  #6b5680;
+  --lantern-dim:  #b98a5a;
+  --lantern-lit:  #ffd257;
+  --lantern-glow: #fff0b0;
+
+  /* --- semantic (no punishment: there is NO "wrong" red anywhere) --- */
+  --joy:        #ffcf5c;
+  --calm:       #8fb89a;       /* gentle "let's listen again" tone */
+  --lumi-body:  #ffe38a;
+  --lumi-core:  #fff4c2;
+  --lumi-aura:  rgba(255, 210, 120, 0.55);
+
+  /* --- geometry --- */
+  --touch:      64px;          /* ≥ 56px minimum, generous for age 6 */
+  --radius:     22px;
+  --radius-lg:  34px;
+  --gap:        18px;
+
+  /* --- type --- */
+  --font-ui:    'Heebo', 'Rubik', system-ui, sans-serif;
+  --shadow-card: 0 10px 30px rgba(46, 36, 64, 0.28);
+  --shadow-soft: 0 4px 14px rgba(46, 36, 64, 0.18);
+
+  /* --- motion --- */
+  --ease: cubic-bezier(0.34, 1.3, 0.5, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body {
+  direction: rtl;              /* interface is RTL Hebrew; English is audio-only */
+  color: var(--ink);
+  background: var(--dusk-deep);
+  user-select: none;
+}
+
+/* English never appears as text to the child; if we ever must show a latin glyph
+   (we don't in the child loop), it would be LTR: */
+[lang="en"] { direction: ltr; unicode-bidi: isolate; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+img { max-width: 100%; }

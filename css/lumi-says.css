@@ -1,0 +1,350 @@
+/* ============================================================
+   lumi-says.css — 🚦 Lumi Says (T6 · Action & Instruction / TPR).
+   MEASURED mechanic = path-choice (shared, untouched). The child hears a COMMAND
+   ("Go!/Stop!/Come!/Jump!") and LEADS Lumi down the trail to the matching POSE.
+   Warm sunset DNA (tokens.css): peach / gold / amber / coral / sage / dusk.
+   Quality bar = lantern-grove.html; mechanic chrome shared with farm-path.html.
+   Skin only — the state machine lives in _measured-core.js + path-choice.js.
+   Scene (dusk path/signpost) is a CSS placeholder until the real illustrated
+   scene lands; pose art = jump/stop/go real PNGs, come = emoji placeholder
+   (see ART-BRIEF-t6-actioninstruction.md).
+   ============================================================ */
+
+:root {
+  --ls-spring: cubic-bezier(.2, .82, .26, 1.18);
+  --ls-settle: cubic-bezier(.22, .78, .24, 1);
+  --ls-shadow: rgba(46, 36, 64, .34);
+}
+
+/* ---- the dusk sky over a warm path horizon (CSS placeholder scene) ---- */
+.ls-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(130% 82% at 50% 112%, var(--sky-glow) 0%, var(--sky-low) 24%, var(--sky-mid) 56%, var(--sky-top) 100%);
+}
+/* a warm path band sweeping up from the fork — reads as the trail Lumi walks */
+.ls-sky::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6%;
+  width: 62%;
+  height: 66%;
+  transform: translateX(-50%);
+  background: radial-gradient(120% 100% at 50% 100%, rgba(255, 210, 138, .34), transparent 62%);
+  filter: blur(2px);
+}
+/* soft dusk wash so trails + Lumi read clearly */
+.ls-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(46, 36, 64, .28) 0%, rgba(46, 36, 64, .05) 34%, transparent 60%);
+}
+
+/* 🔧 the flex chain MUST stay intact (ls-stage → #stage → .measure → .measure-scene),
+   otherwise the absolutely-positioned .paths collapse to height 0 and the stage
+   looks empty. (Lesson from T3/T4.) */
+.ls-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   MEASURED-MECHANIC CHROME (shared shape with farm-path/journey, warm skin).
+   Central target button replays the COMMAND; options never speak while measured.
+   ============================================================ */
+.measure {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.measure-top {
+  position: relative;
+  z-index: 8;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 82px;
+  padding-top: 4px;
+}
+
+.measure-instr {
+  color: var(--peach-soft);
+  font-size: clamp(16px, 4.5vw, 19px);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 2px 10px var(--ls-shadow);
+}
+
+/* the replay affordance: a warm lantern-glass "listen" button */
+.target-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, .6);
+  border-radius: 50%;
+  outline: 0;
+  color: var(--dusk-deep);
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, .96) 0 10%, transparent 32%),
+    linear-gradient(150deg, var(--gold), var(--amber));
+  box-shadow:
+    0 10px 24px rgba(46, 36, 64, .32),
+    0 0 0 5px rgba(255, 195, 92, .16),
+    inset 0 2px 4px rgba(255, 255, 255, .8);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .2s var(--ls-spring), box-shadow .25s ease, filter .25s ease;
+}
+.target-btn:hover { filter: brightness(1.05); transform: translateY(-2px); }
+.target-btn:active { transform: translateY(1px) scale(.95); }
+.target-btn:focus-visible { box-shadow: 0 0 0 4px var(--sage), 0 8px 24px var(--ls-shadow); }
+
+/* CSS-drawn "listening ear" mark (no emoji, no text) */
+.target-ic { width: 24px; height: 28px; font-size: 0; }
+.target-ic::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  width: 15px;
+  height: 23px;
+  border: 3px solid var(--dusk-deep);
+  border-left-color: transparent;
+  border-radius: 55% 52% 58% 45%;
+  transform: rotate(-7deg);
+}
+.target-ic::after {
+  content: "";
+  position: absolute;
+  top: 29px;
+  left: 29px;
+  width: 7px;
+  height: 8px;
+  border-right: 2px solid var(--dusk-deep);
+  border-bottom: 2px solid var(--dusk-deep);
+  border-radius: 0 0 7px;
+}
+.target-wave {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid var(--lantern-glow);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.target-btn.pinging .target-wave { animation: ls-listen-wave .72s ease-out; }
+
+.measure-scene {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================================
+   PATH-CHOICE — three trails fork away; the child leads Lumi to the ACTION he
+   HEARD (a direction/response, not a card tap). Destinations = Lumi poses.
+   ============================================================ */
+.paths {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(8px, 4vw, 26px);
+  padding: 6px 8px 78px;   /* room at the bottom for the crossroads lantern */
+}
+
+/* the crossroads lantern — a warm glow where Lumi stands to be led (NOT a 4th Lumi;
+   the choices themselves are the Lumi poses). */
+.paths .fork {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+.fork-lumi {
+  display: grid;
+  place-items: center;
+  width: clamp(52px, 14vw, 74px);
+  aspect-ratio: 1;
+  font-size: 0;
+  color: transparent;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, #fff 0 14%, var(--lantern-glow) 26%, var(--amber) 58%, transparent 72%);
+  box-shadow: 0 0 26px 8px rgba(255, 205, 120, .55);
+  animation: ls-lantern-breathe 3.8s ease-in-out infinite;
+}
+/* a little post under the lantern */
+.fork-lumi::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 18px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--dusk), rgba(46, 36, 64, .3));
+}
+
+.trail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;   /* pose (order 1) sits at the far end = top */
+  height: 100%;
+  transition: opacity .4s ease;
+}
+/* pose is the DESTINATION (top); the dashed trail descends toward the fork (bottom) */
+.trail-animal { order: 1; }
+.trail-line {
+  order: 2;
+  width: 6px;
+  flex: 1;
+  min-height: 34px;
+  margin-top: 10px;
+  border-radius: 6px;
+  opacity: .5;
+  background: repeating-linear-gradient(180deg, var(--lantern-glow) 0 7px, transparent 7px 17px);
+  transition: opacity .4s ease;
+}
+.trail-animal {
+  display: grid;
+  place-items: center;
+  width: clamp(96px, 25vw, 140px);
+  height: clamp(96px, 25vw, 140px);
+  min-width: 56px;
+  min-height: 56px;
+  border: 3px solid var(--card-edge);
+  border-radius: 28px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .18s var(--ls-spring), border-color .2s ease, box-shadow .3s ease;
+}
+.trail-animal:active { transform: scale(.95); }
+.trail-animal:focus-visible { outline: 0; border-color: var(--sage); box-shadow: 0 0 0 4px rgba(143, 184, 154, .5); }
+.ta-emoji {
+  font-size: clamp(54px, 15vw, 82px);
+  line-height: 1;
+  filter: drop-shadow(0 3px 4px rgba(46, 36, 64, .22));
+}
+
+/* real Lumi POSE illustrations for the actions we have (soft-3D, rembg'd).
+   come stays emoji until its pose art is generated (ART-BRIEF-t6). */
+.trail-animal[data-action="jump"] .ta-emoji,
+.trail-animal[data-action="stop"] .ta-emoji,
+.trail-animal[data-action="go"] .ta-emoji {
+  display: block;
+  width: clamp(84px, 22vw, 122px);
+  height: clamp(84px, 22vw, 122px);
+  font-size: 0;
+  color: transparent;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 4px 6px rgba(46, 36, 64, .32));
+}
+.trail-animal[data-action="jump"] .ta-emoji { background-image: url(../assets/actions/jump.png); }
+.trail-animal[data-action="stop"] .ta-emoji { background-image: url(../assets/actions/stop.png); }
+.trail-animal[data-action="go"]   .ta-emoji { background-image: url(../assets/actions/go.png); }
+
+/* states (owned by path-choice.js) */
+.trail-animal.armed {
+  transform: translateY(-6px) scale(1.05);
+  border-color: var(--gold);
+  box-shadow: 0 0 22px 5px rgba(255, 210, 120, .5);
+}
+.trail-animal.soft { border-color: var(--peach); }               /* gentle — never red */
+.trail.chosen .trail-line { opacity: 1; }
+.trail.chosen .trail-animal { border-color: var(--sage); background: #f4fbf4; transform: translateY(-8px) scale(1.06); }
+.paths.leading .trail:not(.chosen) { opacity: .45; }
+.trail.beckon .trail-animal { border-color: var(--gold); animation: ls-beckon 1s ease-in-out infinite; }
+.trail.faded { opacity: .3; filter: grayscale(.6); pointer-events: none; }
+
+/* success motes (LumiFx.sparkle, from engine.js) — warm storybook glints */
+.spark {
+  position: fixed;
+  z-index: 80;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--lantern-glow), var(--gold));
+  box-shadow: 0 0 7px 2px rgba(255, 210, 120, .7);
+  transform: translate(-50%, -50%);
+  animation: ls-spark-flight .72s ease-out forwards;
+}
+.spark:nth-of-type(3n) { width: 6px; height: 6px; background: radial-gradient(circle, #fff, var(--sage)); }
+
+/* help fab — a soft SOS bubble */
+.help-fab {
+  position: absolute;
+  inset-inline-end: 4px;
+  bottom: 4px;
+  z-index: 9;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 50%;
+  color: var(--dusk-deep);
+  background: rgba(255, 246, 236, .94);
+  box-shadow: 0 8px 20px var(--ls-shadow), inset 0 1px 2px #fff;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* ---- keyframes ---- */
+@keyframes ls-listen-wave { 0% { opacity: .8; transform: scale(.78); } 100% { opacity: 0; transform: scale(1.42); } }
+@keyframes ls-lantern-breathe { 0%, 100% { transform: translateX(-50%) scale(1); filter: brightness(1); } 50% { transform: translateX(-50%) scale(1.06); filter: brightness(1.12); } }
+@keyframes ls-beckon { 0%, 100% { transform: translateY(-4px) scale(1.02); } 50% { transform: translateY(-10px) scale(1.09); } }
+@keyframes ls-spark-flight { to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.2); } }
+
+/* ---- responsive ---- */
+@media (max-width: 400px) {
+  .measure-top { min-height: 74px; }
+  .target-btn { width: 60px; height: 60px; }
+}
+@media (max-width: 370px), (max-height: 720px) {
+  .measure-top { min-height: 66px; gap: 4px; }
+  .measure-instr { font-size: 15px; }
+  .target-btn { width: 58px; height: 58px; }
+}
+@media (min-width: 700px) {
+  .trail-animal { width: 150px; height: 150px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .target-btn, .trail-animal, .trail-line, .trail { transition-duration: .12s; transition-timing-function: linear; }
+  .target-btn.pinging .target-wave, .fork-lumi, .trail.beckon .trail-animal, .spark { animation: none; }
+  .trail-animal.armed, .trail.chosen .trail-animal { transform: none; }
+  .spark { opacity: 0; }
+}

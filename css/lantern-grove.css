@@ -1,0 +1,436 @@
+/* Lantern Grove / Recognize — visual skin only.
+   State and mood attributes are owned by lantern-grove-recognize.js. */
+
+:root {
+  --lg-mint: #9fe8d8;
+  --lg-aqua: #78d8d0;
+  --lg-seafoam: #bff3ea;
+  --lg-warm-glow: #f6e8a6;
+  --lg-cream: #f8f3e8;
+  --lg-lavender: #dccdf8;
+  --lg-lilac-shadow: #8f81bd;
+  --lg-eye-deep: #2a4e63;
+  --lg-grove-night: #233c52;
+  --lg-grove-twilight: #516a82;
+  --lg-shadow: rgba(18, 42, 58, .5);
+  --lg-glow-soft: rgba(246, 232, 166, .46);
+  --lg-spring: cubic-bezier(.2, .82, .26, 1.18);
+  --lg-settle: cubic-bezier(.22, .78, .24, 1);
+}
+
+/* The measured wrapper is part of the same full-height game scene. */
+.measure {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.measure-top {
+  position: relative;
+  z-index: 8;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 76px;
+  padding-top: 2px;
+}
+
+.measure-instr {
+  color: var(--lg-cream);
+  font-size: clamp(16px, 4.5vw, 19px);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 2px 10px var(--lg-shadow);
+}
+
+.measure-scene {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* A distinct replay affordance: glass, warm rim, and a CSS-drawn listening mark. */
+.target-btn {
+  position: relative;
+  display: grid;
+  width: 62px;
+  height: 62px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  place-items: center;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, .62);
+  border-radius: 50%;
+  outline: 0;
+  color: var(--lg-eye-deep);
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, .96) 0 10%, transparent 32%),
+    linear-gradient(145deg, rgba(248, 243, 232, .96), rgba(246, 232, 166, .88));
+  box-shadow:
+    0 10px 24px rgba(21, 47, 65, .32),
+    0 0 0 5px rgba(246, 232, 166, .12),
+    inset 0 -4px 7px rgba(143, 129, 189, .18),
+    inset 0 2px 4px rgba(255, 255, 255, .9);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .2s var(--lg-spring), box-shadow .25s ease, filter .25s ease;
+}
+
+.target-btn:hover {
+  filter: brightness(1.05);
+  box-shadow:
+    0 12px 28px rgba(21, 47, 65, .38),
+    0 0 0 7px rgba(246, 232, 166, .18),
+    inset 0 -4px 7px rgba(143, 129, 189, .18),
+    inset 0 2px 4px rgba(255, 255, 255, .9);
+  transform: translateY(-2px);
+}
+
+.target-btn:active { transform: translateY(1px) scale(.95); }
+.target-btn:focus-visible { box-shadow: 0 0 0 4px var(--lg-aqua), 0 8px 24px var(--lg-shadow); }
+.target-ic { width: 24px; height: 28px; font-size: 0; }
+.target-ic::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 22px;
+  width: 15px;
+  height: 23px;
+  border: 3px solid var(--lg-eye-deep);
+  border-left-color: transparent;
+  border-radius: 55% 52% 58% 45%;
+  transform: rotate(-7deg);
+}
+.target-ic::after {
+  content: "";
+  position: absolute;
+  top: 27px;
+  left: 27px;
+  width: 7px;
+  height: 8px;
+  border-right: 2px solid var(--lg-eye-deep);
+  border-bottom: 2px solid var(--lg-eye-deep);
+  border-radius: 0 0 7px;
+}
+.target-wave {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid var(--lg-warm-glow);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.target-btn.pinging .target-wave { animation: lg-listen-wave .72s ease-out; }
+
+/* ---- scene --------------------------------------------------------- */
+.lg-grove {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;                    /* Lumi + lanterns centered as one group */
+  gap: clamp(8px, 2.2vh, 24px);
+  flex: 1;
+  min-height: 0;                              /* fit the screen — never overflow */
+  width: 100%;
+  padding: clamp(6px, 1.4vh, 12px) 6px clamp(10px, 2.4vh, 20px);
+  box-sizing: border-box;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.lg-bg {
+  position: absolute;
+  z-index: 0;
+  inset: -96px -14px -22px;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 48% 30% at 50% 78%, rgba(246, 232, 166, .18), transparent 72%),
+    linear-gradient(180deg, rgba(35, 60, 82, .05) 0%, rgba(35, 60, 82, .12) 50%, rgba(27, 54, 72, .3) 100%);
+}
+.lg-bg::before {
+  content: "";
+  position: absolute;
+  inset: 12% -16% -20%;
+  background: radial-gradient(ellipse at 50% 72%, transparent 0 38%, rgba(19, 47, 63, .17) 75%, rgba(19, 47, 63, .3) 100%);
+}
+.lg-bg::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: min(92vw, 520px);
+  height: 126px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(246, 232, 166, .2), transparent 68%);
+  filter: blur(12px);
+  transform: translateX(-50%);
+}
+.lg-grove > * { position: relative; z-index: 1; }
+
+/* ---- Lumi companion ----------------------------------------------- */
+.lumi-companion {
+  position: relative;
+  align-self: center;
+  width: clamp(104px, 26vw, 134px);          /* the guide, not the focus */
+  aspect-ratio: 1;
+  margin-bottom: clamp(6px, 1.8vh, 16px);
+  filter: drop-shadow(0 12px 14px rgba(25, 58, 76, .34));
+  transform-origin: 50% 88%;
+}
+.lumi-companion .lc-figure { width: 100%; height: 100%; background: center / contain no-repeat; }
+.lumi-companion .lumi-svg { display: none; }
+.lumi-companion .lc-glow {
+  position: absolute;
+  z-index: -1;
+  inset: 12% 2% 3%;
+  border-radius: 50%;
+  opacity: .52;
+  background: radial-gradient(circle, rgba(191, 243, 234, .52), rgba(120, 216, 208, .11) 52%, transparent 72%);
+  filter: blur(4px);
+  animation: lg-lumi-breathe 3.8s ease-in-out infinite;
+}
+.lumi-companion[data-mood="idle"] .lc-figure { background-image: url(../assets/character/lumi/lumi-idle.png); }
+.lumi-companion[data-mood="listening"] .lc-figure { background-image: url(../assets/character/lumi/lumi-listening.png); }
+.lumi-companion[data-mood="pointing"] .lc-figure { background-image: url(../assets/character/lumi/lumi-pointing.png); }
+.lumi-companion[data-mood="curious"] .lc-figure { background-image: url(../assets/character/lumi/lumi-curious.png); }
+.lumi-companion[data-mood="happy"] .lc-figure { background-image: url(../assets/character/lumi/lumi-happy.png); }
+.lumi-companion[data-mood="celebrate"] .lc-figure { background-image: url(../assets/character/lumi/lumi-celebrate.png); }
+.lumi-companion[data-mood="try-again"] .lc-figure { background-image: url(../assets/character/lumi/lumi-try-again.png); }
+.lumi-companion[data-mood="listening"] { animation: lg-listen-lean 1.7s ease-in-out infinite; }
+.lumi-companion[data-mood="pointing"] { transform: translateX(-8px) scale(1.04); }
+.lumi-companion[data-mood="happy"],
+.lumi-companion[data-mood="celebrate"],
+.lumi-companion.lc-pulse { animation: lg-lumi-joy .62s var(--lg-spring); }
+.lumi-companion[data-mood="try-again"] { animation: lg-lumi-comfort .7s ease; }
+
+.lc-bubble {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  min-width: 36px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 15px 15px 15px 5px;
+  color: var(--lg-eye-deep);
+  background: rgba(248, 243, 232, .94);
+  box-shadow: 0 7px 18px rgba(35, 60, 82, .2);
+  font-size: 0;
+  text-align: center;
+  transform: translateX(-50%);
+}
+.lc-bubble::before { content: "?"; font-size: 22px; font-weight: 900; }
+
+/* ---- lantern composition ------------------------------------------ */
+.lg-lanterns {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  gap: clamp(4px, 2.4vw, 18px);
+  padding: 0 2px;
+  perspective: 700px;
+}
+.lg-lantern {
+  position: relative;
+  flex: 1 1 0;
+  width: min(33vw, 168px);           /* the CHOICES — the focus of the screen */
+  min-width: 56px;
+  max-width: 168px;
+  min-height: 56px;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  transform: translateY(calc((var(--li) - 1) * (var(--li) - 1) * 4px)) rotate(calc((var(--li) - 1) * 1.8deg));
+  transform-origin: 50% 88%;
+  transition: transform .34s var(--lg-spring), opacity .3s ease, filter .3s ease;
+  will-change: transform;
+}
+.lg-lantern[disabled] { cursor: default; }
+.lg-lantern:focus-visible { border-radius: 34%; box-shadow: 0 0 0 4px var(--lg-aqua); }
+.lg-lantern > span { position: absolute; display: grid; inset: 0; place-items: center; pointer-events: none; }
+.lg-glow {
+  inset: 8% -5% 2%;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 249, 213, .96) 0 9%, rgba(246, 232, 166, .58) 28%, rgba(246, 232, 166, .16) 58%, transparent 73%);
+  filter: blur(3px);
+  transform: scale(.7);
+  transition: opacity .36s ease, transform .48s var(--lg-settle), filter .36s ease;
+}
+.lg-shell {
+  background: center / contain no-repeat url(../assets/worlds/lantern-grove/lanterns/lantern-shell.png);
+  filter: saturate(.7) brightness(.62) drop-shadow(0 10px 9px rgba(24, 50, 67, .42));
+  transition: filter .38s ease;
+}
+.lg-animal {
+  inset: 9% 11% 15%;
+  font-size: clamp(34px, 11vw, 56px);   /* emoji distractors (star/cup) render at this size */
+  line-height: 1;
+  opacity: .97;                       /* VISIBLE — the child must see the choices */
+  background: center / contain no-repeat;
+  filter: saturate(.86) brightness(.9) drop-shadow(0 4px 5px rgba(24, 50, 67, .3));
+  transform: translateY(0) scale(1);
+  transform-origin: 50% 82%;
+  transition: opacity .34s ease, filter .4s ease, transform .48s var(--lg-settle);
+  will-change: transform, opacity;
+}
+.lg-animal[data-animal="dog"],
+.lg-animal[data-animal="cat"],
+.lg-animal[data-animal="fish"],
+.lg-animal[data-animal="bird"],
+.lg-animal[data-animal="rabbit"] { color: transparent; }   /* PNG shows; hide the emoji */
+.lg-animal[data-animal="dog"] { background-image: url(../assets/animals/pets/dog.png); }
+.lg-animal[data-animal="cat"] { background-image: url(../assets/animals/pets/cat.png); }
+.lg-animal[data-animal="fish"] { background-image: url(../assets/animals/pets/fish.png); }
+.lg-animal[data-animal="bird"] { background-image: url(../assets/animals/pets/bird.png); }
+.lg-animal[data-animal="rabbit"] { background-image: url(../assets/animals/pets/rabbit.png); }
+.lg-glass {
+  inset: 16% 24% 22%;
+  display: block;
+  overflow: hidden;
+  border-radius: 45% 45% 38% 38%;
+  opacity: .26;
+  background: linear-gradient(112deg, rgba(255, 255, 255, .48), transparent 28% 72%, rgba(246, 232, 166, .2));
+  mix-blend-mode: screen;
+  transition: opacity .35s ease;
+}
+
+/* ---- lantern states ----------------------------------------------- */
+.lg-grove[data-phase="prompting"] .lg-lantern { opacity: .82; filter: saturate(.82); }
+.lg-grove[data-phase="awaiting"] .lg-lantern:not([disabled]) { animation: lg-lantern-idle calc(3.6s + var(--li) * .34s) ease-in-out infinite; }
+.lg-grove[data-phase="awaiting"] .lg-lantern:hover:not([disabled]) {
+  animation-play-state: paused;
+  transform: translateY(-5px) scale(1.035);
+}
+.lg-lantern[data-state="active"] { transform: translateY(-8px) scale(1.055); }
+.lg-lantern[data-state="active"] .lg-shell { filter: saturate(.95) brightness(.84) drop-shadow(0 12px 10px var(--lg-shadow)); }
+.lg-lantern[data-state="active"] .lg-glow { opacity: .48; transform: scale(.9); }
+.lg-lantern[data-state="active"] .lg-animal { opacity: 1; filter: saturate(1) brightness(1); transform: translateY(-2%) scale(1.03); }
+
+.lg-lantern[data-state="revealing"] { z-index: 3; transform: translateY(-14px) scale(1.12); }
+.lg-lantern[data-state="revealing"] .lg-shell { filter: saturate(1.08) brightness(1.08) drop-shadow(0 12px 11px var(--lg-shadow)); }
+.lg-lantern[data-state="revealing"] .lg-glow { opacity: .92; filter: blur(4px); transform: scale(1.2); }
+.lg-lantern[data-state="revealing"] .lg-animal { animation: lg-animal-rise .52s var(--lg-settle) both; }
+.lg-lantern[data-state="revealing"] .lg-glass { opacity: .7; }
+
+.lg-lantern[data-state="success"] { z-index: 4; transform: translateY(-17px) scale(1.15); }
+.lg-lantern[data-state="success"] .lg-shell { filter: saturate(1.12) brightness(1.13) drop-shadow(0 13px 12px var(--lg-shadow)); }
+.lg-lantern[data-state="success"] .lg-glow { opacity: 1; filter: blur(5px); transform: scale(1.28); animation: lg-success-bloom 1.6s ease-in-out infinite; }
+.lg-lantern[data-state="success"] .lg-animal { opacity: 1; filter: saturate(1.05) brightness(1.05) drop-shadow(0 6px 7px rgba(73, 54, 36, .22)); transform: translateY(-8%) scale(1.04); }
+.lg-lantern[data-state="success"] .lg-glass { opacity: .78; }
+
+.lg-lantern[data-state="retry"] { animation: lg-soft-retry .68s ease both; }
+.lg-lantern[data-state="retry"] .lg-shell { filter: saturate(.64) brightness(.7) drop-shadow(0 10px 9px var(--lg-shadow)); }
+.lg-lantern[data-state="retry"] .lg-glow { opacity: .2; }
+.lg-lantern[data-state="hint"] { z-index: 2; }
+.lg-lantern[data-state="hint"] .lg-shell { filter: saturate(.94) brightness(.9) drop-shadow(0 12px 10px var(--lg-shadow)); }
+.lg-lantern[data-state="hint"] .lg-glow { opacity: .72; animation: lg-beckon 1.15s ease-in-out infinite; }
+.lg-lantern[data-state="hint"] .lg-animal { opacity: 1; filter: saturate(1) brightness(1.03); transform: translateY(-3%) scale(1.02); }
+.lg-lantern[data-state="dimmed"] { opacity: .34; filter: saturate(.4) brightness(.74); transform: translateY(5px) scale(.91); }
+.lg-lantern[data-state="dimmed"] .lg-animal { opacity: .5; }
+
+/* Existing success particles, restyled as warm storybook motes. */
+.spark {
+  position: fixed;
+  z-index: 80;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--lg-warm-glow);
+  box-shadow: 0 0 7px 2px rgba(246, 232, 166, .7);
+  transform: translate(-50%, -50%);
+  animation: lg-spark-flight .72s ease-out forwards;
+}
+.spark:nth-of-type(3n) { width: 5px; height: 5px; background: var(--lg-seafoam); }
+
+.help-fab {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  color: var(--lg-eye-deep);
+  background: rgba(248, 243, 232, .94);
+  box-shadow: 0 8px 20px var(--lg-shadow), inset 0 1px 2px #fff;
+  font-size: 0;
+}
+.help-fab::before { content: "?"; font-size: 24px; font-weight: 900; }
+
+@keyframes lg-listen-wave { 0% { opacity: .8; transform: scale(.78); } 100% { opacity: 0; transform: scale(1.42); } }
+@keyframes lg-lumi-breathe { 0%, 100% { opacity: .42; transform: scale(.92); } 50% { opacity: .68; transform: scale(1.06); } }
+@keyframes lg-listen-lean { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-4px) rotate(1deg); } }
+@keyframes lg-lumi-joy { 0% { transform: translateY(0) scale(1); } 45% { transform: translateY(-12px) scale(1.07); } 100% { transform: translateY(0) scale(1); } }
+@keyframes lg-lumi-comfort { 0%, 100% { transform: rotate(0); } 35% { transform: rotate(-2deg) scale(.98); } 70% { transform: rotate(2deg) scale(.98); } }
+@keyframes lg-lantern-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@keyframes lg-animal-rise {
+  0% { opacity: .9; filter: saturate(.86) brightness(.9); transform: translateY(0) scale(1); }
+  55% { opacity: 1; filter: saturate(1.1) brightness(1.18); transform: translateY(-12%) scale(1.13); }
+  100% { opacity: 1; filter: saturate(1.03) brightness(1.06); transform: translateY(-7%) scale(1.05); }
+}
+@keyframes lg-success-bloom { 0%, 100% { opacity: .86; transform: scale(1.18); } 50% { opacity: 1; transform: scale(1.32); } }
+@keyframes lg-soft-retry { 0%, 100% { transform: translateY(0) rotate(0); } 24% { transform: translateY(-2px) rotate(-2deg); } 52% { transform: translateY(1px) rotate(2deg); } 76% { transform: translateY(-1px) rotate(-1deg); } }
+@keyframes lg-beckon { 0%, 100% { opacity: .46; transform: scale(.88); } 50% { opacity: .82; transform: scale(1.13); } }
+@keyframes lg-spark-flight { to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.2); } }
+
+@media (max-width: 430px) {
+  .measure-top { min-height: 70px; }
+  .target-btn { width: 58px; height: 58px; }
+  .lumi-companion { width: clamp(120px, 30vw, 150px); }
+  .lg-lantern { max-width: 128px; }
+}
+
+@media (max-width: 370px), (max-height: 720px) {
+  .measure-top { min-height: 62px; gap: 4px; }
+  .measure-instr { font-size: 15px; }
+  .target-btn { width: 56px; height: 56px; }
+  .lg-grove { padding-bottom: 10px; }
+  .lumi-companion { width: clamp(104px, 26vw, 132px); margin-bottom: 0; }
+  .lg-lanterns { gap: 2px; }
+  .lg-lantern { max-width: 118px; }
+}
+
+@media (min-width: 700px) {
+  .lumi-companion { width: 188px; }
+  .lg-lanterns { gap: 18px; }
+  .lg-lantern { max-width: 158px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .target-btn,
+  .lg-lantern,
+  .lg-glow,
+  .lg-shell,
+  .lg-animal,
+  .lg-glass { transition-duration: .12s; transition-timing-function: linear; }
+  .target-btn.pinging .target-wave,
+  .lumi-companion,
+  .lumi-companion .lc-glow,
+  .lg-grove[data-phase="awaiting"] .lg-lantern,
+  .lg-lantern[data-state="revealing"] .lg-animal,
+  .lg-lantern[data-state="success"] .lg-glow,
+  .lg-lantern[data-state="retry"],
+  .lg-lantern[data-state="hint"] .lg-glow,
+  .spark { animation: none; }
+  .lg-lantern[data-state="active"],
+  .lg-lantern[data-state="revealing"],
+  .lg-lantern[data-state="success"],
+  .lg-lantern[data-state="retry"],
+  .lg-lantern[data-state="hint"] { transform: none; }
+  .lg-lantern[data-state="revealing"] .lg-animal,
+  .lg-lantern[data-state="success"] .lg-animal { opacity: 1; filter: none; transform: translateY(-5%) scale(1); }
+  .spark { opacity: 0; }
+}

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2e2440">
+<title>Lumi · 🚦 לוּמִי אוֹמֵר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lumi-says.css">
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body { display: flex; flex-direction: column;
+    background:
+      linear-gradient(180deg, rgba(46,36,64,.50) 0%, rgba(46,36,64,.16) 42%, rgba(46,36,64,.6) 100%),
+      center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png) fixed,
+      linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%) fixed; }
+  /* ?frame=1 — deterministic 390×844 device box for screenshots */
+  body.frame { width: 390px; height: 844px; margin: 24px auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); position: relative; }
+  html:has(body.frame) { height: auto; background: #111; overflow: auto; }
+
+  /* ---- HUD: lantern progress rail ---- */
+  .ls-hud { position: absolute; top: 0; inset-inline: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .ls-prog { display: flex; gap: 7px; background: rgba(46,36,64,.34); padding: 8px 14px; border-radius: 999px;
+    backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .ls-pip { width: 15px; height: 20px; border-radius: 4px 4px 5px 5px; background: rgba(255,255,255,.22);
+    position: relative; transition: background .4s ease, box-shadow .4s ease; }
+  .ls-pip::before { content: ""; position: absolute; inset-inline: 4px; top: -3px; height: 4px; border-radius: 3px 3px 0 0; background: rgba(255,255,255,.3); }
+  .ls-pip.lit { background: var(--lantern-lit); box-shadow: 0 0 10px 2px var(--lantern-glow); }
+  .ls-home { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); opacity: .92; }
+
+  /* ---- game stage (mechanic mounts here) — the flex chain MUST stay intact ---- */
+  #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding-top: 44px; }
+
+  /* ---- overlays (intro / done) ---- */
+  .ls-overlay { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 18px; padding: 28px;
+    background: radial-gradient(circle at 50% 30%, rgba(46,36,64,.30), rgba(46,36,64,.64)); }
+  .ls-overlay.hidden { display: none; }
+  .ls-hero { width: clamp(150px, 42vw, 210px); aspect-ratio: 1; background: center/contain no-repeat;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,.45)); animation: heroFloat 4s ease-in-out infinite; }
+  .ls-hero[data-mood="idle"] { background-image: url(assets/character/lumi/lumi-idle.png); }
+  .ls-hero[data-mood="celebrate"] { background-image: url(assets/character/lumi/lumi-celebrate.png); }
+  @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .ls-overlay h1 { margin: 0; font-size: clamp(24px, 6.5vw, 34px); font-weight: 900; color: var(--dusk-deep);
+    background: rgba(255,246,236,.96); padding: 10px 24px; border-radius: 20px; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+  .ls-overlay p { margin: 0; font-size: clamp(17px, 4.4vw, 21px); font-weight: 500; line-height: 1.55; color: var(--dusk-deep);
+    background: rgba(255,246,236,.92); padding: 14px 22px; border-radius: 18px; max-width: 460px; }
+  .ls-overlay p b { color: var(--coral-deep); font-weight: 800; }
+  .ls-btn-big { font-size: 21px; font-weight: 800; color: #fff6ec; border: 0; cursor: pointer;
+    background: linear-gradient(180deg, var(--coral), var(--coral-deep)); padding: 15px 42px; border-radius: 999px;
+    box-shadow: 0 10px 24px rgba(224,90,74,.5); min-height: 56px; transition: transform .15s ease; }
+  .ls-btn-big:active { transform: scale(.96); }
+  .ls-btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; cursor: pointer;
+    color: var(--dusk-deep); background: rgba(255,246,236,.86); border: 0; padding: 11px 26px; border-radius: 999px; min-height: 48px; }
+  .ls-btn-ghost:active { transform: scale(.96); }
+</style>
+</head>
+<body>
+  <div class="ls-sky" aria-hidden="true"></div>
+
+  <main class="ls-stage">
+    <div class="ls-hud">
+      <div class="ls-prog" id="prog" aria-label="פנסים שנדלקו"></div>
+      <div class="ls-home" title="הבית של לומי">🏠</div>
+    </div>
+    <div id="stage"></div>
+  </main>
+
+  <div class="ls-overlay" id="introOverlay">
+    <div class="ls-hero" data-mood="idle"></div>
+    <h1>לוּמִי אוֹמֵר 🚦</h1>
+    <p>לוּמִי עוֹמֵד עַל הַשְּׁבִיל 🌾<br>הַקְשִׁיבוּ לַ<b>פְּקֻדָּה</b> וְהוֹבִילוּ אֶת לוּמִי לַתְּנוּעָה הַנְּכוֹנָה — <b>קוֹפֵץ, עוֹצֵר, הוֹלֵךְ אוֹ בָּא.</b><br>כָּל פְּקֻדָּה שֶׁתַּצְלִיחוּ מַדְלִיקָה עוֹד <b>פַּנָּס</b>.</p>
+    <button class="ls-btn-ghost" id="introSpeaker">🔊 הַקְשִׁיבוּ לַהֶסְבֵּר</button>
+    <button class="ls-btn-big" id="startBtn">בּוֹאוּ נַתְחִיל ➜</button>
+  </div>
+
+  <div class="ls-overlay hidden" id="doneOverlay">
+    <div class="ls-hero" data-mood="celebrate"></div>
+    <h1>כָּל הַפַּנָּסִים דּוֹלְקִים! 🎉</h1>
+    <p>הוֹבַלְתֶּם אֶת לוּמִי בְּכָל הַפְּקֻדּוֹת!</p>
+    <button class="ls-btn-big" id="againBtn">עוֹד פַּעַם ➜</button>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/audio-clips.js"></script>\n  <script src="js/profile.js"></script>
+  <script src="js/mechanics/_measured-core.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/mechanics/path-choice.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var q = location.search;
+    if (/[?&]frame=1/.test(q)) document.body.classList.add('frame');
+    if (/[?&]reset=1/.test(q)) { try { localStorage.removeItem('lumi-bkt-v1'); } catch (e) {} }
+
+    var D = window.LUMI_DATA || { emoji: {} };
+    var WORDS = ['go', 'stop', 'come', 'jump'];      // subtopic: move — the MEASURED action words
+    // command form = authentic TPR intonation; matches the recorded clip keys (audio-clips.js)
+    var CMD = { go: 'Go!', stop: 'Stop!', come: 'Come!', jump: 'Jump!' };
+    var HELP = { go: 'לוּמִי צָרִיךְ לָלֶכֶת', stop: 'לוּמִי צָרִיךְ לַעֲצֹר', come: 'לוּמִי צָרִיךְ לָבוֹא', jump: 'לוּמִי צָרִיךְ לִקְפֹּץ' };
+    var stageEl = document.getElementById('stage');
+    var progEl = document.getElementById('prog');
+
+    function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+    // build the lantern progress rail
+    var pips = WORDS.map(function () { var p = document.createElement('span'); p.className = 'ls-pip'; progEl.appendChild(p); return p; });
+    function lightPips(n) { pips.forEach(function (p, i) { p.classList.toggle('lit', i < n); }); }
+
+    // recorded-audio unlock (autoplay policy) — touch every clip once on first gesture
+    function unlockAudio() {
+      Object.keys(LumiAudio.clipMap).forEach(function (k) {
+        try { var a = new Audio(LumiAudio.clipMap[k]); a.preload = 'auto'; var pr = a.play(); if (pr) pr.then(function () { a.pause(); a.currentTime = 0; }).catch(function () {}); } catch (e) {}
+      });
+    }
+
+    // a recognize item for `word`: correct = that action, 2 distractors = OTHER actions.
+    // The target audio is the COMMAND ("Go!"); options are Lumi POSES (jump/stop/go real
+    // PNGs, come = emoji placeholder until its art lands — see ART-BRIEF-t6-actioninstruction.md).
+    function makeItem(word) {
+      var others = shuffle(WORDS.filter(function (w) { return w !== word; })).slice(0, (window.LumiProfile ? LumiProfile.distractors() : 2));
+      var opts = shuffle([{ img: word, correct: true }].concat(others.map(function (o) { return { img: o, correct: false }; })));
+      return { prompt: { audio_en: CMD[word] }, options: opts, help_he: HELP[word], target: [word] };
+    }
+
+    var order = shuffle(WORDS), idx = 0, lit = 0, autoplay = /[?&]autoplay=1/.test(q);
+    if (autoplay) window.LUMI_AUTOPLAY = true;
+
+    function nextRound() {
+      if (idx >= order.length) return showDone();
+      var word = order[idx++];
+      stageEl.innerHTML = '';
+      var it = makeItem(word);
+      LumiPathChoice.present(stageEl, {
+        item: it,
+        emoji: D.emoji || {},
+        targetRep: { glyph: (D.emoji && D.emoji[word]) || '❔' },
+        instructionHe: idx === 1 ? 'הַקְשִׁיבוּ לַפְּקֻדָּה וְהוֹבִילוּ' : null, showInstruction: idx === 1,
+        onMeasured: function () {},
+        onDone: function () {
+          lit++; lightPips(lit);
+          try { LumiAudio.english('You did it!'); } catch (e) {}
+          setTimeout(nextRound, 950);
+        },
+      });
+      // tag each trail with its action so the CSS swaps emoji → real pose PNG
+      // (options render in the same order path-choice.present iterates them).
+      var btns = stageEl.querySelectorAll('.trail-animal');
+      for (var b = 0; b < btns.length; b++) {
+        if (it.options[b]) btns[b].setAttribute('data-action', it.options[b].img);
+      }
+    }
+
+    function showDone() {
+      document.getElementById('doneOverlay').classList.remove('hidden');
+      try { LumiAudio.clipMap['done'] = 'assets/audio/words/done-he.mp3'; LumiAudio.speak('done'); } catch (e) {}
+    }
+
+    document.getElementById('introSpeaker').addEventListener('click', function () {
+      unlockAudio();
+      try { LumiAudio.clipMap['intro'] = 'assets/audio/words/intro-he.mp3'; LumiAudio.speak('intro'); } catch (e) {}
+    });
+    document.getElementById('startBtn').addEventListener('click', function () {
+      unlockAudio();
+      document.getElementById('introOverlay').classList.add('hidden');
+      lightPips(0); nextRound();
+    });
+    document.getElementById('againBtn').addEventListener('click', function () {
+      order = shuffle(WORDS); idx = 0; lit = 0; lightPips(0);
+      document.getElementById('doneOverlay').classList.add('hidden'); nextRound();
+    });
+
+    // QA autoplay — skip the intro and drive automatically
+    if (autoplay) { document.getElementById('introOverlay').classList.add('hidden'); nextRound(); }
+  })();
+  </script>
+</body>
+</html>
