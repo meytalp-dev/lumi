@@ -90,6 +90,8 @@
   <script src="js/audio-clips.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/mechanics/_measured-core.js"></script>
+  <script src="js/bkt.js"></script>
+  <script src="js/telemetry.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/mechanics/path-choice.js"></script>
   <script>
@@ -101,6 +103,9 @@
 
     var D = window.LUMI_DATA || { emoji: {} };
     var WORDS = ['cow', 'horse', 'duck', 'pig', 'sheep'];   // subtopic: farm
+
+    // Stage 0.0: the severed data loop is reconnected via the central contract
+    // (js/telemetry.js) — every measured first-attempt now feeds the BKT engine.
     var stageEl = document.getElementById('stage');
     var progEl = document.getElementById('prog');
 
@@ -138,7 +143,7 @@
         emoji: D.emoji || {},
         targetRep: { glyph: (D.emoji && D.emoji[word]) || '❔' },
         instructionHe: idx === 1 ? 'הַקְשִׁיבוּ וְהוֹבִילוּ' : null, showInstruction: idx === 1,
-        onMeasured: function () {},
+        onMeasured: function (res) { LumiTelemetry.recordMeasured({ word: word, dimension: 'recognize', context: 'farm-path', res: res }); },
         onDone: function () {
           lit++; lightPips(lit);
           try { LumiAudio.english('You found it!'); } catch (e) {}

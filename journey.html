@@ -18,7 +18,7 @@
   position: fixed; inset: 0; overflow: hidden;
   background:
     linear-gradient(180deg, rgba(46,36,64,.50) 0%, rgba(46,36,64,.12) 38%, rgba(46,36,64,.58) 100%),
-    center/cover no-repeat url(assets/worlds/lantern-grove/backgrounds/grove-bg.png),
+    center/cover no-repeat var(--world-bg, url(assets/worlds/lantern-grove/backgrounds/grove-bg.png)),
     radial-gradient(120% 80% at 50% 108%, var(--sky-glow) 0%, var(--sky-low) 22%, var(--sky-mid) 55%, var(--sky-top) 100%);
 }
 .sky::after { /* soft stars up high */
@@ -377,7 +377,7 @@
 <script>
 (function () {
   'use strict';
-  var LEARNER = 'pilot-child';
+  var LEARNER = (window.LumiBKT && LumiBKT.learnerId()) || 'local';   // per-student (unified)
   // Persist across sittings (Meytal 13.7): BKT, contexts, reps & discriminate wins
   // accrue day to day. A lantern in-progress resumes next session. ?reset=1 clears.
   if (/[?&]reset=1/.test(location.search)) {
@@ -386,6 +386,16 @@
 
   // QA-only: ?autoplay=1 auto-answers so the whole journey renders for review.
   if (/[?&]autoplay=1/.test(location.search)) window.LUMI_AUTOPLAY = true;
+
+  // per-world background: only farm & safari have bespoke art; the rest keep the grove.
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var BG = {
+      'animals/farm': 'assets/worlds/farm-path/backgrounds/farm-bg.png',
+      'animals/wild': 'assets/worlds/safari/backgrounds/jungle-bg.png',
+    }[(p.get('topic') || '') + '/' + (p.get('subtopic') || '')];
+    if (BG) document.documentElement.style.setProperty('--world-bg', 'url(' + BG + ')');
+  })();
 
   var lumiCtrl = LumiCharacter.mount(document.getElementById('lumi'));
   var introCtrl = LumiCharacter.mount(document.getElementById('introLumi'));
@@ -400,9 +410,11 @@
 
   function boot() {
     document.getElementById('intro').classList.add('intro--hidden');
+    var params = new URLSearchParams(location.search);   // ?topic=&subtopic= → any world
     LumiEngine.start({
       learnerId: LEARNER,
-      subtopic: 'pets',
+      topic: params.get('topic') || 'animals',
+      subtopic: params.get('subtopic') || 'pets',
       lumi: lumiCtrl,
       stageRoot: document.getElementById('stage'),
       pathRoot: document.getElementById('path'),

@@ -29,6 +29,7 @@ window.LumiEngine = (function () {
   function start(opts) {
     var data = window.LUMI_DATA || { items: [], emoji: {}, instructions: {}, reps: {} };
     var learnerId = opts.learnerId || 'local';
+    var topic = opts.topic || 'animals';       // generalized beyond animals (was hardcoded)
     var subtopic = opts.subtopic || 'pets';
     var stageEl = opts.stageRoot;
     var lumi = opts.lumi;
@@ -37,7 +38,7 @@ window.LumiEngine = (function () {
     LumiBKT.beginSession(learnerId);
 
     var segItems = data.items.filter(function (it) {
-      return it.topic === 'animals' && it.subtopic === subtopic;
+      return it.topic === topic && it.subtopic === subtopic;
     });
     var words = unique(segItems
       .filter(function (it) { return it.dimension === 'meet'; })
@@ -75,10 +76,14 @@ window.LumiEngine = (function () {
       if (plan.length >= 4) plan.splice(Math.floor(plan.length / 2), 0, { t: 'parent', kind: 'mid' });
       // one comprehension (secondary KC) for a word in this sitting
       var compWord = words.filter(function (w) { return sessionWords[w] && (byDim.comprehend || {})[w]; })[0];
-      if (compWord) plan.push({ t: 'comprehend', word: compWord });
+      if (compWord) plan.push({ t: 'comprehend', word: compWord, context: 'comprehend' });
       // one self-listening produce (engagement, unmeasured)
       var prodWord = words.filter(function (w) { return sessionWords[w] && (byDim.produce || {})[w]; })[0];
       if (prodWord) plan.push({ t: 'produce', word: prodWord });
+      // one functional-use / dialogue beat (engagement) — the "talk" rung. Was never
+      // played before: runFunction existed but no beat was ever added to the plan.
+      var fnWord = words.filter(function (w) { return sessionWords[w] && (byDim['function'] || {})[w]; })[0];
+      if (fnWord) plan.push({ t: 'function', word: fnWord });
       // the sitting always ends on a satisfying gate-of-light beat
       plan.push({ t: 'finale' });
       return plan;

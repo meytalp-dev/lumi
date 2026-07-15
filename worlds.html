@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2e2440">
+<title>Lumi · כָּל הָעוֹלָמוֹת</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: Heebo, system-ui, sans-serif; color: #fff6ec; padding: 22px 16px 40px;
+    background:
+      linear-gradient(180deg, rgba(46,36,64,.5) 0%, rgba(46,36,64,.2) 45%, rgba(46,36,64,.62) 100%),
+      linear-gradient(180deg, var(--sky-top, #f7b26a) 0%, var(--sky-mid, #b06a9e) 55%, var(--sky-low, #3a2b52) 100%) fixed;
+  }
+  header { text-align: center; margin-bottom: 6px; }
+  h1 { font-size: clamp(24px, 6vw, 34px); font-weight: 900; margin: 0 0 4px; }
+  .sub { font-size: 15px; font-weight: 500; opacity: .9; max-width: 620px; margin: 0 auto 22px; line-height: 1.5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; max-width: 760px; margin: 0 auto; }
+  .card { display: flex; flex-direction: column; align-items: center; gap: 8px; text-decoration: none; color: inherit;
+    background: rgba(255,246,236,.1); border: 1px solid rgba(255,246,236,.18); border-radius: 20px; padding: 20px 12px 16px;
+    backdrop-filter: blur(6px); box-shadow: 0 8px 24px rgba(0,0,0,.28); transition: transform .15s ease, background .15s ease; }
+  .card:hover { transform: translateY(-3px); background: rgba(255,246,236,.18); }
+  .card .ico { font-size: 44px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.4)); }
+  .card .name { font-size: 17px; font-weight: 800; }
+  .card .dims { display: flex; gap: 3px; margin-top: 2px; }
+  .pip { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,246,236,.28); }
+  .pip.on { background: var(--gold, #f6e8a6); box-shadow: 0 0 6px rgba(246,232,166,.7); }
+  .legend { text-align: center; font-size: 13px; opacity: .82; margin: 20px auto 0; max-width: 620px; line-height: 1.6; }
+  .legend b { color: var(--gold, #f6e8a6); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>כָּל הָעוֹלָמוֹת 🏮</h1>
+    <p class="sub">כָּל עוֹלָם מַפְעִיל אֶת <b>מְנוֹעַ הַמַּסָּע הַשָּׁזוּר</b> — פְּגִישָׁה → זִהוּי → הַבְחָנָה → הֲבָנָה → אֲמִירָה — עִם מַתְכַּנֵּן חֲזָרָה וּפָנֵל־רְאָיוֹת לַהוֹרֶה. הַנְּקֻדּוֹת מַרְאוֹת אֵילוּ מְמַדִּים קַיָּמִים בְּעוֹלָם.</p>
+  </header>
+  <div class="grid" id="grid"></div>
+  <p class="legend">הַנְּקֻדּוֹת: <b>פְּגִישָׁה · זִהוּי · הַבְחָנָה · הֲבָנָה · אֲמִירָה · שִׂיחָה</b>. פְּתְחוּ פָּנֵל־הוֹרֶה בְּתוֹךְ הַמִּשְׂחָק (☰). לְנִיפּוּי־בָּאגִים: הוֹסִיפוּ <code>&amp;autoplay=1</code> לְרִיצָה אוֹטוֹמָטִית.</p>
+
+  <script>
+  // world → { he name, emoji, dims present } — dims from the live item bank coverage
+  var WORLDS = [
+    { t:'animals', s:'farm',     he:'חַוַּת הָרֶפֶת', ico:'🐄', d:[1,1,1,1,1,1] },
+    { t:'animals', s:'wild',     he:'סָפָארִי',       ico:'🦁', d:[1,1,1,1,1,1] },
+    { t:'animals', s:'pets',     he:'חוֹרְשַׁת הַפַּנָּסִים', ico:'🐶', d:[1,1,1,1,1,1] },
+    { t:'family',  s:'people',   he:'מִשְׁפָּחָה',    ico:'👨‍👩‍👧', d:[1,1,1,1,1,0] },
+    { t:'food',    s:'snacksmeal', he:'פִּיקְנִיק',   ico:'🥪', d:[1,1,1,1,1,0] },
+    { t:'face',    s:'face',     he:'פָּנִים',        ico:'😀', d:[1,1,1,1,1,0] },
+    { t:'body',    s:'body',     he:'גּוּף',          ico:'✋', d:[1,1,1,1,1,0] },
+    { t:'numbers', s:'core',     he:'מִסְפָּרִים',    ico:'🔢', d:[1,1,1,1,1,0] },
+    { t:'emotions',s:'feelings', he:'רְגָשׁוֹת',      ico:'😊', d:[1,1,1,0,1,0] },
+    { t:'colors',  s:'core',     he:'צְבָעִים',       ico:'🎨', d:[1,1,1,0,1,0] },
+    { t:'actioninstruction', s:'move', he:'פְּעֻלּוֹת', ico:'🤸', d:[1,1,1,0,1,0] },
+    { t:'greetings',s:'friends', he:'בְּרָכוֹת',      ico:'👋', d:[1,1,1,0,1,0] },
+    { t:'fruits',  s:'fruits',   he:'פֵּרוֹת',        ico:'🍎', d:[1,1,1,0,1,0] },
+  ];
+  var grid = document.getElementById('grid');
+  WORLDS.forEach(function (w) {
+    var a = document.createElement('a');
+    a.className = 'card';
+    a.href = 'journey.html?topic=' + w.t + '&subtopic=' + w.s + '&reset=1';
+    a.innerHTML =
+      '<span class="ico">' + w.ico + '</span>' +
+      '<span class="name">' + w.he + '</span>' +
+      '<span class="dims">' + w.d.map(function (on) { return '<span class="pip' + (on ? ' on' : '') + '"></span>'; }).join('') + '</span>';
+    grid.appendChild(a);
+  });
+  </script>
+</body>
+</html>

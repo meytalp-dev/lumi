@@ -170,7 +170,9 @@
   <script src="js/mechanics/_measured-core.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/mechanics/light-beam.js"></script>
-  <script>
+    <script src="js/bkt.js"></script>
+  <script src="js/telemetry.js"></script>
+<script>
   (function () {
     'use strict';
     var q = location.search;
@@ -240,7 +242,7 @@
         item: makeItem(word), emoji: FRUIT, lumi: null,
         targetRep: { glyph: FRUIT[word] || (D.emoji && D.emoji[word]) || '❔' },
         instructionHe: idx === 1 ? 'הַקְשִׁיבוּ וְהָאִירוּ' : null, showInstruction: idx === 1,
-        onMeasured: function () {},
+        onMeasured: function (res) { LumiTelemetry.recordMeasured({ word: word, dimension: 'recognize', context: 'fruit-basket', res: res }); },
         onDone: function () {
           markFound(word); lit++; lightPips(order, lit);
           try { LumiAudio.english('You found it!'); } catch (e) {}

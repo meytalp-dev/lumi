@@ -41,6 +41,16 @@ window.LumiBKT = (function () {
   var MIN_REPTYPES = 2;  // 🔒 v2 §4: independent success across ≥2 representations …
   var MIN_CONTEXTS = 2;  // 🔒 v2 §4: … AND ≥2 contexts (mechanics).
 
+  // ---- the ONE learner-id source (unifies journey + standalone games): the actual
+  //      student (set at welcome, carried as ?name=), so progress is per-child. ----
+  function currentLearnerId() {
+    try {
+      var n = localStorage.getItem('lumi-student-name');
+      if (!n) { var m = /[?&]name=([^&]+)/.exec(location.search); if (m) n = decodeURIComponent(m[1]); }
+      return n || 'local';
+    } catch (e) { return 'local'; }
+  }
+
   // ---- storage ----
   function loadRaw(key) { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } }
   function saveRaw(key, s) { try { localStorage.setItem(key, JSON.stringify(s)); } catch (e) {} }
@@ -205,6 +215,7 @@ window.LumiBKT = (function () {
   }
 
   return {
+    learnerId: currentLearnerId,
     beginSession: beginSession,
     ingest: ingest,
     recordProduction: recordProduction,

@@ -95,18 +95,18 @@
     // the 12 games, in journey order, each pinned to its themed clearing.
     // p = PERCENT coords on the PORTRAIT map;  w = PERCENT coords on the WIDE map.
     var GAMES = [
-      { f: 'farm-path.html',          nm: 'שְׁבִיל הָרֶפֶת',    p: [21, 85], w: [82, 63] },
-      { f: 'safari-beam.html',        nm: 'סָפָארִי',          p: [74, 80], w: [66, 65] },
-      { f: 'fruit-basket.html',       nm: 'סַל הַפֵּרוֹת',      p: [23, 67], w: [39, 71] },
-      { f: 'picnic.html',             nm: 'הַפִּיקְנִיק',       p: [61, 62], w: [17, 79] },
-      { f: 'color-beam.html',         nm: 'הַצְּבָעִים',        p: [24, 52], w: [13, 56] },
-      { f: 'count-the-lanterns.html', nm: 'סְפֹר פַּנָּסִים',   p: [70, 46], w: [32, 45] },
-      { f: 'find-the-feeling.html',   nm: 'הָרֶגֶשׁ',          p: [28, 38], w: [16, 33] },
-      { f: 'lumi-says.html',          nm: 'לוּמִי אוֹמֵר',      p: [72, 32], w: [86, 43] },
-      { f: 't10-face.html',           nm: 'הַפָּנִים',         p: [27, 25], w: [76, 31] },
-      { f: 't11-body.html',           nm: 'גַּע וְזוּז',        p: [63, 24], w: [57, 26] },
-      { f: 'family-photo.html',       nm: 'הַמִּשְׁפָּחָה',     p: [38, 15], w: [36, 20] },
-      { f: 'lantern-of-hello.html',   nm: 'פַּנַּס הַשָּׁלוֹם', p: [70, 15], w: [11, 14] }
+      { f: 'journey.html?topic=animals&subtopic=farm',            nm: 'שְׁבִיל הָרֶפֶת',    p: [21, 85], w: [82, 63] },
+      { f: 'journey.html?topic=animals&subtopic=wild',            nm: 'סָפָארִי',          p: [74, 80], w: [66, 65] },
+      { f: 'journey.html?topic=fruits&subtopic=fruits',           nm: 'סַל הַפֵּרוֹת',      p: [23, 67], w: [39, 71] },
+      { f: 'journey.html?topic=food&subtopic=snacksmeal',         nm: 'הַפִּיקְנִיק',       p: [61, 62], w: [17, 79] },
+      { f: 'journey.html?topic=colors&subtopic=core',             nm: 'הַצְּבָעִים',        p: [24, 52], w: [13, 56] },
+      { f: 'journey.html?topic=numbers&subtopic=core',            nm: 'סְפֹר פַּנָּסִים',   p: [70, 46], w: [32, 45] },
+      { f: 'journey.html?topic=emotions&subtopic=feelings',       nm: 'הָרֶגֶשׁ',          p: [28, 38], w: [16, 33] },
+      { f: 'journey.html?topic=actioninstruction&subtopic=move',  nm: 'לוּמִי אוֹמֵר',      p: [72, 32], w: [86, 43] },
+      { f: 'journey.html?topic=face&subtopic=face',               nm: 'הַפָּנִים',         p: [27, 25], w: [76, 31] },
+      { f: 'journey.html?topic=body&subtopic=body',               nm: 'גַּע וְזוּז',        p: [63, 24], w: [57, 26] },
+      { f: 'journey.html?topic=family&subtopic=people',           nm: 'הַמִּשְׁפָּחָה',     p: [38, 15], w: [36, 20] },
+      { f: 'journey.html?topic=greetings&subtopic=friends',       nm: 'פַּנַּס הַשָּׁלוֹם', p: [70, 15], w: [11, 14] }
     ];
     var START = { p: [50, 92], w: [88, 86] };   // where Lumi stands at the trailhead
 
@@ -131,7 +131,9 @@
       name = m ? decodeURIComponent(m[1]) : (localStorage.getItem('lumi-student-name') || '');
       if (name) document.getElementById('hi').textContent = name + ', לַמַּסָּע! 🏮';
     } catch (e) {}
-    var qs = name ? ('?name=' + encodeURIComponent(name)) : '';
+    var qs = name ? ('name=' + encodeURIComponent(name)) : '';
+    // join a query onto a file that may already carry '?…' (journey.html?topic=…)
+    function go(f) { location.href = f + (qs ? (f.indexOf('?') >= 0 ? '&' : '?') + qs : ''); }
 
     var stage = document.querySelector('.stage');
     var wrap = document.getElementById('mapwrap');
@@ -160,7 +162,7 @@
         node.style.setProperty('--dur', (2.6 + (i % 5) * 0.35) + 's');
         node.setAttribute('aria-label', g.nm);
         node.innerHTML = '<span class="disc">' + (i + 1) + '</span><span class="nm">' + g.nm + '</span>';
-        node.addEventListener('click', function () { location.href = g.f + qs; });
+        node.addEventListener('click', function () { go(g.f); });
         wrap.appendChild(node);
       });
 
@@ -172,7 +174,7 @@
         '<button type="button" class="say">בּוֹאוּ נַתְחִיל! ✨</button>';
       // mapping already ran before the map — "let's begin" launches the journey (first game)
       start.querySelector('.say').addEventListener('click', function () {
-        location.href = GAMES[0].f + qs;
+        go(GAMES[0].f);
       });
       wrap.appendChild(start);
     }

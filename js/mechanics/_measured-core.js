@@ -40,7 +40,10 @@ window.LumiMeasured = (function () {
       measured: false, resolved: false, learning: false,
       armedKey: null, help: 0, helpBeforeFirst: false, options: [],
       locked: !!opts.gateOnPrompt,   // §6: no selection while the prompt audio plays
+      supports: [], t0: 0,           // SPEC-stage0 §4: which supports preceded the
+                                     //   measured tap, + response time (for the event store)
     };
+    function pushSupport(s) { if (!st.measured && st.supports.indexOf(s) === -1) st.supports.push(s); }
 
     root.innerHTML = '';
     var wrap = document.createElement('div');
@@ -73,7 +76,7 @@ window.LumiMeasured = (function () {
       if (Array.isArray(opts.targetAudio)) return LumiAudio.sequence(opts.targetAudio);
       return LumiAudio.english(opts.targetAudio);
     }
-    targetBtn.addEventListener('click', playTarget);
+    targetBtn.addEventListener('click', function () { pushSupport('audio_replay'); playTarget(); });
 
     helpBtn.addEventListener('click', function () {
       if (!st.measured) st.helpBeforeFirst = true;
@@ -90,10 +93,13 @@ window.LumiMeasured = (function () {
 
       if (!st.measured) {
         // MEASURED PHASE — first tap SELECTS. No pre-hearing of options.
-        st.measured = true;
         var usedHelp = st.helpBeforeFirst;
+        var supportsUsed = st.supports.slice();
+        var responseTimeMs = st.t0 ? (Date.now() - st.t0) : null;
+        st.measured = true;
         if (typeof opts.onMeasured === 'function') {
-          try { opts.onMeasured({ firstCorrect: !!opt.isCorrect, usedHelp: usedHelp }); } catch (e) {}
+          try { opts.onMeasured({ firstCorrect: !!opt.isCorrect, usedHelp: usedHelp,
+            supportsUsed: supportsUsed, responseTimeMs: responseTimeMs }); } catch (e) {}
         }
         if (opt.isCorrect) return commitCorrect(opt);
         return enterLearning(opt);   // wrong first answer → teach, don't grade
@@ -142,6 +148,9 @@ window.LumiMeasured = (function () {
 
     function escalateHelp() {
       st.help++;
+      if (st.help === 1) pushSupport('audio_replay');
+      else if (st.help === 2) pushSupport('fewer_choices');
+      else if (st.help >= 3) pushSupport('partial_model');
       if (st.help === 1) { playTarget(); }
       if (st.help === 2) {
         // drop one distractor (keep correct + one other).
@@ -164,9 +173,11 @@ window.LumiMeasured = (function () {
       var p = playTarget();
       if (st.locked) {
         Promise.resolve(p).then(function () {
-          st.locked = false;
+          st.locked = false; st.t0 = Date.now();   // clock starts when options go interactive
           if (typeof opts.onArmed === 'function') { try { opts.onArmed(); } catch (e) {} }
         });
+      } else {
+        st.t0 = Date.now();
       }
     }, 260);
 
